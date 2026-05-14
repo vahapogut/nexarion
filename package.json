@@ -1,0 +1,14 @@
+{
+  "name": "nexarion",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Universal MCP ↔ A2A Bridge — connect any MCP client to any A2A agent",
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "dev": "pnpm --filter nexarion-server dev"
+  },
+  "keywords": ["mcp", "a2a", "bridge", "agent", "protocol", "model-context-protocol", "agent-to-agent", "interoperability"],
+  "author": "Abdulvahap OGUT <info@ipeclabs.com>",
+  "license": "Apache-2.0"
+}

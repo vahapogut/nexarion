@@ -1,0 +1,23 @@
+{
+  "name": "nexarion-core",
+  "version": "0.1.0",
+  "description": "Nexarion core — universal MCP ↔ A2A protocol translation engine",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "test": "vitest run",
+    "dev": "tsup src/index.ts --format esm,cjs --dts --watch"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "files": ["dist"],
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "https://github.com/vahapogut/nexarion" },
+  "keywords": ["mcp", "a2a", "bridge", "agent", "protocol"],
+  "author": "Abdulvahap OGUT <info@ipeclabs.com>"
+}
