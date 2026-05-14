@@ -1,32 +1,134 @@
 <div align="center">
   <h1>Nexarion</h1>
-  <p><b>Universal MCP ↔ A2A Bridge</b></p>
-  <p>Connect any MCP client to any A2A agent. Auto-discovery, dynamic tool generation, bidirectional translation.</p>
+  <p><b>Universal interoperability runtime between MCP tools and A2A agents.</b></p>
+  <p>Dynamic agent discovery · Runtime schema translation · Streaming bridge · Auth interoperability</p>
 
-  <a href="#quick-start"><img src="https://img.shields.io/badge/npm-nexarion--core-purple?style=for-the-badge&logo=npm" alt="npm"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-green?style=for-the-badge" alt="License"></a>
   <a href="https://github.com/vahapogut/nexarion"><img src="https://img.shields.io/badge/GitHub-nexarion-blue?style=for-the-badge&logo=github" alt="GitHub"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-green?style=for-the-badge" alt="License"></a>
+  <a href="https://github.com/vahapogut/nexarion/actions"><img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build"></a>
 </div>
 
 ---
 
-## What is Nexarion?
+## Problem
 
-Nexarion bridges two major AI protocol standards:
+The AI agent ecosystem is fragmenting into two incompatible standards:
 
-- **MCP (Model Context Protocol)** — agent-to-tool (Anthropic, Claude, VS Code, Cursor)
-- **A2A (Agent-to-Agent)** — agent-to-agent communication (Google, Linux Foundation)
+- **MCP** (Anthropic) — tools connect to agents, but agents can't talk to other agents
+- **A2A** (Google/Linux Foundation) — agents talk to agents, but not to MCP tools
 
-It lets **any MCP client** (Claude Desktop, Cursor, VS Code) call **any A2A agent** as if it were a local MCP tool. No bespoke integration needed.
+There is no universal bridge. Developers must choose sides or write bespoke integrations.
+
+## Solution
+
+Nexarion is an **agent interoperability runtime** — a runtime layer that dynamically bridges MCP and A2A.
 
 ```
-┌─────────────────┐         ┌──────────────┐         ┌─────────────────┐
-│  MCP Client     │ ──►     │  Nexarion     │  ──►   │  A2A Agent      │
-│  (Claude, etc)  │ ◄──     │  Bridge       │  ◄──   │  (Any provider) │
-└─────────────────┘         └──────────────┘         └─────────────────┘
-   tools/list                  Discovery               Agent Cards
-   tools/call                  Translation             message/send
+┌─────────────────────────────────────────────────────────────────┐
+│                       MCP CLIENTS                               │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
+│  │ Claude   │  │ Cursor   │  │ VS Code  │  │ Zed      │ ...   │
+│  └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘      │
+│       │             │             │             │              │
+│       └─────────────┴──────┬──────┴─────────────┘              │
+│                            │  tools/list, tools/call            │
+└────────────────────────────┼────────────────────────────────────┘
+                             │  stdio / HTTP / SSE
+                             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       NEXARION RUNTIME                          │
+│  ┌──────────────┐  ┌────────────────┐  ┌───────────────────┐   │
+│  │ Discovery    │  │ Translator     │  │ Router            │   │
+│  │ Agent Cards  │→ │ MCP ↔ A2A      │→ │ Auth passthrough  │   │
+│  │ /.well-known │  │ Schema mapping │  │ Rate limiting     │   │
+│  └──────────────┘  └────────────────┘  └───────────────────┘   │
+└────────────────────────────┼────────────────────────────────────┘
+                             │  message/send, task/submit
+                             ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       A2A AGENTS                                │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐      │
+│  │ Weather  │  │ Code     │  │ Research │  │ Custom   │ ...   │
+│  │ Agent    │  │ Agent    │  │ Agent    │  │ Agent    │      │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘      │
+└─────────────────────────────────────────────────────────────────┘
 ```
+
+### Killer Feature: Dynamic Tool Synthesis
+
+```
+1. A2A agent detected at https://weather.agent.ai
+2. GET /.well-known/agent-card.json
+3. Agent Card parsed → skills extracted
+4. Each skill auto-converted to MCP tool with inputSchema
+5. Instantly usable in Claude Desktop / Cursor / VS Code
+
+No configuration. No manual mapping. Just discover and use.
+```
+
+## Protocol Mapping
+
+Nexarion translates between MCP and A2A in real-time:
+
+| MCP Concept | Nexarion | A2A Concept |
+|---|---|---|
+| `tools/list` | → Agent Card skills | `GET /.well-known/agent-card.json` |
+| `tools/call` | → message/send | `POST /jsonrpc` with `message/send` |
+| Tool `inputSchema` | → Skill parameters | Skill `description` + `tags` |
+| Text response | ← Task result | `message.parts[].text` |
+| Tool error | ← Task failure | `status.state = failed` |
+
+### Real Protocol Example
+
+**MCP Request (from Claude):**
+```json
+{
+  "method": "tools/call",
+  "params": {
+    "name": "a2a_weather_agent_forecast",
+    "arguments": { "message": "Weather in Paris tomorrow?" }
+  }
+}
+```
+
+**Nexarion translates to A2A:**
+```json
+{
+  "jsonrpc": "2.0",
+  "method": "message/send",
+  "params": {
+    "message": {
+      "role": "user",
+      "parts": [{ "type": "text", "text": "Weather in Paris tomorrow?" }]
+    },
+    "configuration": { "blocking": false }
+  },
+  "id": "1718400000000"
+}
+```
+
+**A2A Response translated back to MCP:**
+```json
+{
+  "content": [{
+    "type": "text",
+    "text": "Paris: Partly cloudy, 22°C, 15% chance of rain."
+  }]
+}
+```
+
+## Why Nexarion?
+
+| | MCP Only | A2A Only | Nexarion |
+|---|---|---|---|
+| Agent ↔ Tool | ✅ | ❌ | ✅ |
+| Agent ↔ Agent | ❌ | ✅ | ✅ |
+| Auto-Discovery | ❌ | ✅ | ✅ |
+| Dynamic Schema | ❌ | Partial | ✅ |
+| Cross-Protocol | ❌ | ❌ | ✅ |
+| Claude Desktop | ✅ | ❌ | ✅ |
+| Streaming | ✅ | ✅ | ✅ |
+| Self-Hosted | ✅ | ✅ | ✅ |
 
 ## Quick Start
 
@@ -40,30 +142,12 @@ npx nexarion-cli discover https://agent.example.com
 npx nexarion-cli tools
 
 # Call an A2A agent through MCP
-npx nexarion-cli call a2a_agent_skill '{"message":"Hello"}'
+npx nexarion-cli call a2a_weather_agent_forecast '{"message":"Weather in Paris?"}'
 ```
-
-## Features
-
-- **Auto-Discovery** — Fetches Agent Cards from `/.well-known/agent-card.json`
-- **Dynamic Tool Generation** — Each A2A skill becomes an MCP tool with auto-generated inputSchema
-- **Bidirectional Translation** — MCP → A2A message translation and A2A → MCP response mapping
-- **Stdio + HTTP** — Works as a local stdio server (Claude Desktop) or HTTP server (remote)
-- **Streaming** — SSE streaming support across both protocols
-- **Auth Passthrough** — MCP OAuth + A2A token support
-
-## Packages
-
-| Package | Description |
-|---|---|
-| `nexarion-core` | Core bridge engine — discovery, translation, routing |
-| `nexarion-server` | MCP server that wraps A2A agents as MCP tools |
-| `nexarion-cli` | CLI for managing the bridge |
-| `nexarion-web` | Web dashboard for monitoring |
 
 ## Claude Desktop Integration
 
-Add to your `claude_desktop_config.json`:
+Add to `claude_desktop_config.json`:
 
 ```json
 {
@@ -76,7 +160,26 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
-Restart Claude Desktop. All discovered A2A agents appear as MCP tools.
+See `examples/claude-desktop/` for full setup.
+
+## Packages
+
+| Package | Description |
+|---|---|
+| `nexarion-core` | Core bridge engine — discovery, translation, routing |
+| `nexarion-server` | MCP server — stdio + HTTP, JSON-RPC handler |
+| `nexarion-cli` | CLI — discover, tools, call, agents, stats, serve |
+| `nexarion-web` | Web dashboard — monitor agents, tools, traffic |
+
+## Contributing
+
+```bash
+git clone https://github.com/vahapogut/nexarion.git
+cd nexarion
+pnpm install
+pnpm build
+pnpm test
+```
 
 ## License
 

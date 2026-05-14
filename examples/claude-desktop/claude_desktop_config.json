@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "nexarion": {
+      "command": "npx",
+      "args": ["nexarion-cli", "serve"],
+      "env": {
+        "A2A_AUTH_TOKEN": "${A2A_AUTH_TOKEN}",
+        "NEXARION_AGENTS": "https://weather.agent.ai,https://code.agent.ai"
+      }
+    }
+  }
+}
