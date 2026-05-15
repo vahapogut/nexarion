@@ -120,7 +120,7 @@ export class NexarionBridge {
         };
       }
 
-      const a2aResponse = await response.json();
+      const a2aResponse = await response.json() as Record<string, unknown>;
 
       // Translate A2A → MCP
       const result = this.translator.translateA2AtoMCP(

@@ -47,7 +47,7 @@ export class AgentDiscovery {
         throw new Error(`Agent card fetch failed: ${response.status}`);
       }
 
-      const card: AgentCard = await response.json();
+      const card = await response.json() as AgentCard;
       if (!card.name || !card.url) {
         throw new Error('Invalid agent card: missing name or url');
       }

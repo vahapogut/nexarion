@@ -8,7 +8,19 @@
     "test": "pnpm -r test",
     "dev": "pnpm --filter nexarion-server dev"
   },
-  "keywords": ["mcp", "a2a", "bridge", "agent", "protocol", "model-context-protocol", "agent-to-agent", "interoperability"],
+  "keywords": [
+    "mcp",
+    "a2a",
+    "bridge",
+    "agent",
+    "protocol",
+    "model-context-protocol",
+    "agent-to-agent",
+    "interoperability"
+  ],
   "author": "Abdulvahap OGUT <info@ipeclabs.com>",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/node": "^25.8.0"
+  }
 }
