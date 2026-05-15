@@ -18,6 +18,7 @@ const USAGE = `
 Nexarion CLI — Universal MCP ↔ A2A Bridge
 
 Commands:
+  init                    Interactive project setup wizard
   discover <url>          Discover an A2A agent
   discover-all <urls...>  Discover multiple agents
   tools                   List all MCP tools
@@ -50,6 +51,11 @@ async function main() {
 
   try {
     switch (command) {
+      case 'init': {
+        const { wizard } = await import('./init-wizard.js');
+        await wizard();
+        break;
+      }
       case 'discover': {
         const url = args[1];
         if (!url) { console.error('Usage: nexarion discover <url>'); process.exit(1); }

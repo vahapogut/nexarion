@@ -7,6 +7,11 @@
 export { NexarionBridge } from './bridge.js';
 export { AgentDiscovery } from './discovery.js';
 export { ProtocolTranslator } from './translator.js';
+export { Validator } from './schema.js';
+export { createACPClient, type ACPClient, type ACPMessage, type ACPResponse } from './acp.js';
+export { CapabilityAuth, type AuthPolicy, type CapabilityToken } from './auth.js';
+export { EventBridge, type AgentEvent, type WebhookRegistration } from './webhook.js';
+export { PluginManager, type Plugin, type PluginContext } from './plugins.js';
 export type {
   AgentCard, AgentSkill, AgentCapability, AgentAuth,
   MCPTool, MCPProperty, MCPToolCallRequest, MCPToolCallResult,

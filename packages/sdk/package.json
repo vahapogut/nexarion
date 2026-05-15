@@ -1,0 +1,26 @@
+{
+  "name": "nexarion-sdk",
+  "version": "0.3.0",
+  "description": "Nexarion SDK — build A2A-compatible agents in 50 lines of TypeScript",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "nexarion-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.8.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  },
+  "files": ["dist"],
+  "license": "Apache-2.0",
+  "repository": { "type": "git", "url": "https://github.com/vahapogut/nexarion" },
+  "keywords": ["nexarion", "sdk", "a2a", "agent", "mcp"],
+  "author": "Abdulvahap OGUT <info@ipeclabs.com>"
+}
