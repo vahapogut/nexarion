@@ -1,5 +1,5 @@
 {
-  "name": "nexarion-cli",
+  "name": "nexarioncli",
   "version": "0.1.0",
   "description": "Nexarion CLI — manage the MCP ↔ A2A bridge",
   "bin": { "nexarion": "./dist/cli.js" },
