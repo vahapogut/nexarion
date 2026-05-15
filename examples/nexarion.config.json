@@ -1,0 +1,39 @@
+{
+  "agents": [
+    {
+      "url": "https://weather.agent.ai",
+      "name": "WeatherAgent",
+      "auth": {
+        "token": "${WEATHER_AGENT_TOKEN}"
+      }
+    },
+    {
+      "url": "https://code.agent.ai",
+      "name": "CodeAgent",
+      "auth": {
+        "token": "${CODE_AGENT_TOKEN}"
+      }
+    }
+  ],
+  "cache": {
+    "ttlMinutes": 5,
+    "maxEntries": 100
+  },
+  "retry": {
+    "maxAttempts": 3,
+    "initialDelayMs": 1000,
+    "maxDelayMs": 30000
+  },
+  "rateLimit": {
+    "requestsPerMinute": 60,
+    "burst": 10
+  },
+  "streaming": {
+    "enabled": true,
+    "timeoutMs": 30000
+  },
+  "server": {
+    "transport": "stdio",
+    "port": 3000
+  }
+}

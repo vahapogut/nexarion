@@ -19,6 +19,8 @@ export class NexarionBridge {
   private startTime: number;
   private translationsTotal = 0;
   private translationsFailed = 0;
+  private maxRetries = 3;
+  private retryDelay = 1000;
 
   constructor(config: BridgeConfig) {
     this.config = config;
@@ -30,6 +32,23 @@ export class NexarionBridge {
     for (const card of config.agents) {
       this.discovery.register(card);
     }
+  }
+
+  /** Retry a fetch with exponential backoff */
+  private async fetchWithRetry(url: string, options: RequestInit, retries = this.maxRetries): Promise<Response> {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        const response = await fetch(url, options);
+        if (response.ok || response.status < 500) return response;
+        if (attempt < retries) {
+          await new Promise(r => setTimeout(r, this.retryDelay * Math.pow(2, attempt)));
+        }
+      } catch (err) {
+        if (attempt === retries) throw err;
+        await new Promise(r => setTimeout(r, this.retryDelay * Math.pow(2, attempt)));
+      }
+    }
+    throw new Error(`Fetch failed after ${retries} retries`);
   }
 
   /**
@@ -102,7 +121,7 @@ export class NexarionBridge {
         id: Date.now().toString(),
       };
 
-      const response = await fetch(endpoint, {
+      const response = await this.fetchWithRetry(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
