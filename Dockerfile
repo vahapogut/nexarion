@@ -27,6 +27,6 @@ EXPOSE 3000
 USER node
 
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD curl -f http://localhost:3000/health || exit 1
+  CMD wget -qO- http://localhost:3000/health || exit 1
 
-CMD ["node", "/app/packages/cli/dist/cli.js", "serve"]
+CMD ["node", "/app/packages/server/dist/cli.js"]

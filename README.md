@@ -156,10 +156,10 @@ npm install nexarion-core nexarion-server
 npx nexarioncli discover https://agent.example.com
 
 # List exposed MCP tools
-npx nexarion-cli tools
+npx nexarioncli tools
 
 # Call an A2A agent through MCP
-npx nexarion-cli call a2a_weather_agent_forecast '{"message":"Weather in Paris?"}'
+npx nexarioncli call a2a_weather_agent_forecast '{"message":"Weather in Paris?"}'
 ```
 
 ## Claude Desktop Integration
@@ -171,7 +171,7 @@ Add to `claude_desktop_config.json`:
   "mcpServers": {
     "nexarion": {
       "command": "npx",
-      "args": ["nexarion-cli", "serve"]
+      "args": ["nexarioncli", "serve"]
     }
   }
 }
@@ -185,7 +185,7 @@ See `examples/claude-desktop/` for full setup.
 |---|---|
 | `nexarion-core` | Core bridge engine — discovery, translation, routing |
 | `nexarion-server` | MCP server — stdio + HTTP, JSON-RPC handler |
-| `nexarion-cli` | CLI — discover, tools, call, agents, stats, serve |
+| `nexarioncli` | CLI — discover, tools, call, agents, stats, serve |
 | `nexarion-web` | Web dashboard — monitor agents, tools, traffic |
 
 ## Contributing

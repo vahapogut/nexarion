@@ -114,19 +114,14 @@ async function main() {
         break;
       }
       case 'serve': {
-        console.error('Starting Nexarion MCP server (stdio mode)...');
-        console.error('Add this to your Claude Desktop config:');
-        console.error(JSON.stringify({
-          mcpServers: {
-            nexarion: {
-              command: 'npx',
-              args: ['nexarion-cli', 'serve'],
-            },
-          },
-        }, null, 2));
-        console.error('\nWaiting for MCP client connection...');
-        // Keep alive for stdio
-        setInterval(() => {}, 1000);
+        // Launch real MCP server (stdio mode)
+        const { spawn } = await import('child_process');
+        const serverCli = new URL('../../server/dist/cli.js', import.meta.url).pathname;
+        const child = spawn('node', [serverCli, '--transport', 'stdio'], {
+          stdio: 'inherit',
+          env: { ...process.env },
+        });
+        child.on('exit', (code) => process.exit(code || 0));
         break;
       }
       default:

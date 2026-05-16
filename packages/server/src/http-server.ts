@@ -115,14 +115,15 @@ export function createHTTPServer(config: HTTPServerConfig) {
 
     // MCP JSON-RPC (stateless)
     if (url === '/mcp' && req.method === 'POST') {
-      const chunks: Buffer[] = [];
-      for await (const chunk of req) chunks.push(chunk as Buffer);
-      const body = JSON.parse(Buffer.concat(chunks).toString());
-
-      const { method, params, id } = body;
-      res.setHeader('Content-Type', 'application/json');
-
+      let id: string | number = 0;
       try {
+        const chunks: Buffer[] = [];
+        for await (const chunk of req) chunks.push(chunk as Buffer);
+        const body = JSON.parse(Buffer.concat(chunks).toString());
+        id = body.id;
+        const { method, params } = body;
+        res.setHeader('Content-Type', 'application/json');
+
         switch (method) {
           case 'initialize':
             res.end(JSON.stringify({

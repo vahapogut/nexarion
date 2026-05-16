@@ -99,7 +99,14 @@ export class NexarionBridge {
    * Discover agents from URLs and expose them as MCP tools.
    */
   async discover(urls: string[]): Promise<DiscoveredAgent[]> {
-    return this.discovery.discoverAll(urls);
+    const agents = await this.discovery.discoverAll(urls);
+    // Run onDiscover plugin hooks for each agent
+    for (const agent of agents) {
+      if (agent.status === 'online') {
+        await this.plugins.runOnDiscover(agent.card);
+      }
+    }
+    return agents;
   }
 
   /**
@@ -217,10 +224,6 @@ export class NexarionBridge {
 
         a2aResponse = await response.json() as Record<string, unknown>;
       }
-
-
-
-
       // Translate A2A → MCP
       const result = this.translator.translateA2AtoMCP(
         a2aResponse.result || a2aResponse,

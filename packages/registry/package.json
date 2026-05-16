@@ -3,6 +3,7 @@
   "version": "0.4.0",
   "description": "Nexarion Agent Registry — discover, verify, and manage A2A agents",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "type": "module",
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",

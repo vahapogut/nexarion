@@ -27,7 +27,7 @@ jobs:
           for pkg in packages/core packages/server packages/cli packages/sdk packages/registry; do
             cd $pkg
             npm publish --access public || true
-            cd ../../..
+            cd ../..
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
