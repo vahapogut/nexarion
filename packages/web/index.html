@@ -3,74 +3,57 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nexarion — MCP ↔ A2A Bridge Dashboard</title>
+  <title>Nexarion — Bridge Monitor</title>
   <style>
-    :root { --bg: #09090b; --panel: #18181b; --border: #27272a; --text: #fafafa; --muted: #a1a1aa; --accent: #8b5cf6; --green: #22c55e; --red: #ef4444; --amber: #f59e0b; }
+    :root { --bg: #09090b; --panel: #18181b; --border: #27272a; --text: #fafafa; --muted: #a1a1aa; --accent: #8b5cf6; --green: #22c55e; --red: #ef4444; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
     .container { max-width: 1000px; margin: 0 auto; padding: 24px; }
-    header { text-align: center; padding: 40px 0 24px; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
-    header h1 { font-size: 1.8rem; font-weight: 800; }
-    header h1 span { color: var(--accent); }
-    header p { color: var(--muted); margin-top: 6px; }
-
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
-    .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; text-align: center; }
-    .stat .val { font-size: 1.6rem; font-weight: 700; }
-    .stat .lbl { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; margin-top: 4px; }
-
-    .section { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 20px; margin-bottom: 16px; }
-    .section h3 { font-size: 0.9rem; margin-bottom: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
-
-    .agent-card { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--bg); border-radius: 6px; margin-bottom: 8px; }
-    .agent-card .name { font-weight: 600; }
-    .agent-card .meta { font-size: 0.8rem; color: var(--muted); }
-    .agent-card .status { font-size: 0.7rem; padding: 3px 10px; border-radius: 12px; font-weight: 600; }
-    .agent-card .status.online { background: #065f4640; color: var(--green); }
-    .agent-card .status.offline { background: #7f1d1d40; color: var(--red); }
-
-    .tool-list { display: grid; gap: 6px; }
-    .tool-item { padding: 8px 12px; background: var(--bg); border-radius: 6px; font-family: monospace; font-size: 0.8rem; }
-    .tool-item .tname { color: var(--accent); font-weight: 600; }
-    .tool-item .tdesc { color: var(--muted); }
-
-    footer { text-align: center; padding: 20px; color: var(--muted); font-size: 0.8rem; }
-    footer a { color: var(--accent); }
-
+    header { text-align: center; padding: 32px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    header h1 { font-size: 1.5rem; } header h1 span { color: var(--accent); }
+    header p { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+    .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
+    .stat .val { font-size: 1.4rem; font-weight: 700; } .stat .lbl { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
+    .section { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+    .section h3 { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 10px; }
+    .agent-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg); border-radius: 6px; margin-bottom: 6px; }
+    .agent-row .name { font-weight: 600; } .agent-row .meta { font-size: 0.75rem; color: var(--muted); }
+    .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .dot.online { background: var(--green); } .dot.offline { background: var(--red); }
+    .log-entry { font-family: monospace; font-size: 0.75rem; padding: 3px 0; border-bottom: 1px solid var(--border); color: var(--muted); }
+    .toolbar { display: flex; gap: 8px; margin-bottom: 16px; }
+    button { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; font-size: 0.8rem; background: var(--panel); color: var(--text); }
+    button:hover { border-color: var(--accent); }
+    input { padding: 6px 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; color: var(--text); }
+    footer { text-align: center; padding: 20px; color: var(--muted); font-size: 0.7rem; } footer a { color: var(--accent); }
     @media (max-width: 600px) { .stats { grid-template-columns: 1fr 1fr; } }
   </style>
 </head>
 <body>
 <div class="container">
-  <header>
-    <h1>Nexar<span>ion</span></h1>
-    <p>Universal MCP ↔ A2A Bridge — Monitor your agent connections</p>
-  </header>
-
+  <header><h1>Nexar<span style="color:var(--accent)">ion</span> Bridge Monitor</h1><p>Real-time MCP ↔ A2A bridge dashboard. Connect to a running Nexarion server.</p></header>
+  <div class="toolbar">
+    <input id="url" value="http://localhost:3000" placeholder="Server URL" style="flex:1;max-width:300px">
+    <button onclick="fetchAll()">Refresh</button>
+    <button onclick="startSSE()">Live SSE</button>
+  </div>
   <div class="stats">
-    <div class="stat"><div class="val" id="stat-agents">0</div><div class="lbl">Agents Bridged</div></div>
-    <div class="stat"><div class="val" id="stat-tools">0</div><div class="lbl">MCP Tools Exposed</div></div>
-    <div class="stat"><div class="val" id="stat-translations">0</div><div class="lbl">Translations</div></div>
-    <div class="stat"><div class="val" id="stat-failed">0</div><div class="lbl">Failed</div></div>
+    <div class="stat"><div class="val green" id="s-agents">—</div><div class="lbl">Agents</div></div>
+    <div class="stat"><div class="val" id="s-tools">—</div><div class="lbl">Tools</div></div>
+    <div class="stat"><div class="val" id="s-trans">—</div><div class="lbl">Translations</div></div>
+    <div class="stat"><div class="val red" id="s-err">—</div><div class="lbl">Errors</div></div>
   </div>
-
-  <div class="section">
-    <h3>Connected Agents (A2A → MCP)</h3>
-    <div id="agent-list">
-      <div style="color:var(--muted)">No agents connected. Run <code>nexarion discover &lt;url&gt;</code> to add agents.</div>
-    </div>
-  </div>
-
-  <div class="section">
-    <h3>MCP Tools</h3>
-    <div class="tool-list" id="tool-list">
-      <div style="color:var(--muted)">No tools exposed. Bridge A2A agents to see their skills here.</div>
-    </div>
-  </div>
-
-  <footer>
-    <a href="https://github.com/vahapogut/nexarion">GitHub</a> · Built by <a href="https://ipeclabs.com">IPEC Labs</a>
-  </footer>
+  <div class="section"><h3>Connected Agents</h3><div id="agents"></div></div>
+  <div class="section"><h3>Live Log</h3><div id="log"></div></div>
+  <footer><a href="https://github.com/vahapogut/nexarion">GitHub</a> · Nexarion v0.3.2</footer>
 </div>
+<script>
+let es;
+function log(t,m){const d=document.createElement('div');d.className='log-entry';d.textContent=`${new Date().toLocaleTimeString()} [${t}] ${m}`;document.getElementById('log').insertBefore(d,log.firstChild)}
+async function fetchAll(){const b=document.getElementById('url').value.replace(/\/$/,'');try{const h=await(await fetch(b+'/health')).json();document.getElementById('s-agents').textContent=h.agents||0;document.getElementById('s-tools').textContent=h.tools||0;document.getElementById('s-trans').textContent=h.translations||0;document.getElementById('s-err').textContent=h.errors||0;const a=await(await fetch(b+'/agents')).json();const el=document.getElementById('agents');el.innerHTML=a.length?a.map(x=>`<div class="agent-row"><div><span class="dot ${x.status}"></span><span class="name">${x.name}</span></div><div class="meta">${x.skills} skills · ${x.latency}ms</div></div>`).join(''):'<div style="color:var(--muted)">No agents connected.</div>';log('ok','Fetched: '+h.agents+' agents, '+h.tools+' tools')}catch(e){log('err',e.message)}}
+function startSSE(){if(es)es.close();es=new EventSource(document.getElementById('url').value.replace(/\/$/,'')+'/sse');es.onopen=()=>log('sse','Connected');es.onmessage=e=>{try{log('evt',JSON.stringify(JSON.parse(e.data)))}catch{}};es.onerror=()=>log('err','SSE lost')}
+fetchAll();
+</script>
 </body>
 </html>

@@ -105,3 +105,5 @@ export async function createNexarionServer(config: NexarionServerConfig): Promis
   await server.start();
   return server;
 }
+
+export { createHTTPServer, type HTTPServerConfig } from './http-server.js';
