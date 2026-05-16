@@ -8,6 +8,9 @@
   <a href="https://github.com/vahapogut/nexarion/actions"><img src="https://github.com/vahapogut/nexarion/actions/workflows/ci.yml/badge.svg" alt="Build"></a>
   <a href="https://www.npmjs.com/package/nexarion-core"><img src="https://img.shields.io/badge/npm-nexarion--core-purple?style=for-the-badge&logo=npm" alt="npm"></a>
   <a href="https://www.npmjs.com/package/nexarion-sdk"><img src="https://img.shields.io/badge/npm-nexarion--sdk-orange?style=for-the-badge&logo=npm" alt="npm"></a>
+  <a href="https://www.npmjs.com/package/nexarioncli"><img src="https://img.shields.io/badge/npm-nexarioncli-red?style=for-the-badge&logo=npm" alt="npm"></a>
+  <a href="#tests"><img src="https://img.shields.io/badge/tests-102_passed-brightgreen?style=for-the-badge" alt="Tests"></a>
+  <a href="#performance"><img src="https://img.shields.io/badge/version-0.6.0-blue?style=for-the-badge" alt="Version"></a>
 </div>
 
 ---
@@ -144,8 +147,10 @@ Nexarion translates between MCP and A2A in real-time:
 - **Hot-Reload** — Config changes trigger automatic agent rediscovery
 - **SDK** — Build A2A agents in 50 lines with `nexarion-sdk`
 - **CLI** — discover, tools, call, agents, stats, serve, init, validate
-- **VS Code Extension** — Sidebar panel, TreeView, command palette commands
-- **Web Dashboard** — Live fetch + SSE, real-time agent monitoring
+- **SSE Streaming** — Real-time A2A SSE event parsing, stream-to-MCP conversion
+- **SQLite Registry** — Persistent agent directory with search and health checks
+- **VS Code Extension** — Live agent list via HTTP, TreeView, status bar, health check
+- **Web Dashboard** — Agent list, tool test console, SSE live, event log, auto-refresh
 
 ## Quick Start
 
@@ -191,6 +196,14 @@ See `examples/claude-desktop/` for full setup.
 | `nexarion-web` | Web dashboard — live fetch + SSE, agent monitoring |
 | `nexarion-vscode` | VS Code extension — sidebar, TreeView, command palette |
 
+## Tests
+
+102 tests across 5 packages, 20 test files. Run with:
+
+```bash
+pnpm test
+```
+
 ## Contributing
 
 ```bash
@@ -199,6 +212,7 @@ cd nexarion
 pnpm install
 pnpm build
 pnpm test
+pnpm lint
 ```
 
 ## License
