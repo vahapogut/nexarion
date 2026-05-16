@@ -30,7 +30,7 @@ export function activate(context: vscode.ExtensionContext) {
   }));
   context.subscriptions.push(vscode.commands.registerCommand('nexarion.healthCheck', async () => {
     try {
-      const r = await (await fetch('http://localhost:3000/health')).json() as Record<string, unknown>;
+      const r = await (await fetch('${serverUrl}/health')).json() as Record<string, unknown>;
       vscode.window.showInformationMessage(`Nexarion: ${r.agents} agents, ${r.tools} tools`);
     } catch { vscode.window.showErrorMessage('Server unreachable at http://localhost:3000'); }
   }));
@@ -47,7 +47,7 @@ class AgentTreeProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
 
   async getChildren(): Promise<vscode.TreeItem[]> {
     try {
-      const r = await fetch('http://localhost:3000/agents');
+      const r = await fetch('${serverUrl}/agents');
       const agents = await r.json() as Array<Record<string, unknown>>;
       return agents.map(a => {
         const item = new vscode.TreeItem(a.name as string);

@@ -1,12 +1,12 @@
 {
   "name": "nexarion",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "description": "Universal MCP ↔ A2A Bridge — connect any MCP client to any A2A agent",
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
-    "lint": "eslint packages/*/src --ext .ts",
+    "lint": "eslint packages/*/src/**/*.ts",
     "format": "prettier --write packages/*/src/**/*.ts",
     "dev": "pnpm --filter nexarion-server dev",
     "prepare": "husky"

@@ -184,7 +184,9 @@ export class NexarionBridge {
       }
 
       // Send to A2A agent — use ACP (REST) if available, otherwise JSON-RPC
+      // If streaming is enabled, collect SSE events
       let a2aResponse: Record<string, unknown>;
+      const useStreaming = this.config.streaming && agent.card.capabilities.streaming;
 
       if (useREST) {
         // ACP REST-native call — simpler, curl-compatible

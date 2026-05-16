@@ -82,6 +82,7 @@ async function main() {
 
   // stdio mode — handle JSON-RPC from stdin
   if (transport === 'stdio') {
+    log.useStderr = true; // Critical: keep stdout clean for MCP JSON-RPC
     process.stdin.setEncoding('utf-8');
     let buffer = '';
 
