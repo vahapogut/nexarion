@@ -1,3 +1,5 @@
+import { Logger } from "nexarion-core";
+const log = new Logger("nexarion");
 /**
  * Nexarion — HTTP/SSE Server Transport
  *
@@ -230,7 +232,7 @@ export function createHTTPServer(config: HTTPServerConfig) {
 
   // Graceful shutdown
   const shutdown = () => {
-    console.log('[Nexarion HTTP] Shutting down gracefully...');
+    log.info('[Nexarion HTTP] Shutting down gracefully...');
     for (const client of sseClients) client.end();
     sseClients.clear();
     server.close(() => process.exit(0));
@@ -243,9 +245,9 @@ export function createHTTPServer(config: HTTPServerConfig) {
     start() {
       return new Promise<void>((resolve) => {
         server.listen(port, host, () => {
-          console.log(`[Nexarion HTTP] Server on http://${host}:${port}`);
-          console.log(`[Nexarion HTTP] SSE: http://localhost:${port}/sse`);
-          console.log(`[Nexarion HTTP] MCP: http://localhost:${port}/mcp`);
+          log.info(`[Nexarion HTTP] Server on http://${host}:${port}`);
+          log.info(`[Nexarion HTTP] SSE: http://localhost:${port}/sse`);
+          log.info(`[Nexarion HTTP] MCP: http://localhost:${port}/mcp`);
           resolve();
         });
       });

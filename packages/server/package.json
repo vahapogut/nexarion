@@ -9,6 +9,7 @@
   "bin": {
     "nexarion-server": "./dist/cli.js"
   },
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js", "require": "./dist/index.cjs" } },
   "scripts": {
     "build": "tsup src/index.ts src/cli.ts --format esm,cjs --dts",
     "test": "vitest run --passWithNoTests",

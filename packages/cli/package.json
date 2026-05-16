@@ -5,6 +5,7 @@
   "description": "Nexarion CLI — manage the MCP ↔ A2A bridge",
   "bin": { "nexarion": "./dist/cli.js" },
   "type": "module",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js", "require": "./dist/index.cjs" } },
   "scripts": {
     "build": "tsup src/cli.ts --format esm",
     "test": "vitest run --passWithNoTests"

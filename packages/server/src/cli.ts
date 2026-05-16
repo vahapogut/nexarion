@@ -1,18 +1,11 @@
 #!/usr/bin/env node
 /**
  * Nexarion MCP Server — CLI Entry Point
- *
- * Start the bridge server. Compatible with:
- * - Claude Desktop (stdio transport)
- * - Any MCP client (HTTP transport)
- *
- * Usage:
- *   nexarion-server --agents https://agent1.example.com,https://agent2.example.com
- *   nexarion-server --config ./nexarion.config.json
- *   nexarion-server --transport stdio
  */
 
+import { Logger } from 'nexarion-core';
 import { createNexarionServer } from './index.js';
+const log = new Logger('nexarion');
 import type { BridgeConfig } from 'nexarion-core';
 import { readFileSync } from 'fs';
 
@@ -44,7 +37,7 @@ async function main() {
       const cfg = JSON.parse(raw);
       bridgeConfig = { ...bridgeConfig, ...cfg };
     } catch (err) {
-      console.error(`Failed to load config: ${err}`);
+      log.error(`Failed to load config: ${err}`);
       process.exit(1);
     }
   }
@@ -73,7 +66,7 @@ async function main() {
 
   // ── Start ──────────────────────────────────────────────────────────
 
-  console.error('[Nexarion] Starting MCP ↔ A2A Bridge...');
+  log.error('[Nexarion] Starting MCP ↔ A2A Bridge...');
 
   const server = await createNexarionServer({
     bridge: bridgeConfig,
@@ -84,8 +77,8 @@ async function main() {
   });
 
   const stats = server.getStats();
-  console.error(`[Nexarion] ✓ ${stats.agentsDiscovered} agents bridged`);
-  console.error(`[Nexarion] ✓ ${stats.toolsExposed} MCP tools exposed`);
+  log.error(`[Nexarion] ✓ ${stats.agentsDiscovered} agents bridged`);
+  log.error(`[Nexarion] ✓ ${stats.toolsExposed} MCP tools exposed`);
 
   // stdio mode — handle JSON-RPC from stdin
   if (transport === 'stdio') {
