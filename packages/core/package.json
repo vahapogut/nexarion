@@ -1,6 +1,6 @@
 {
   "name": "nexarion-core",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "description": "Nexarion core — universal MCP ↔ A2A protocol translation engine",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -120,6 +120,30 @@ async function main() {
 
     // Keep process alive
     process.stdin.resume();
+
+    // Hot-reload: watch config file
+    if (flags.config) {
+      const { createConfigWatcher } = await import('./hot-reload.js');
+      const watcher = createConfigWatcher(flags.config, (server as any).bridge);
+      watcher.start();
+    }
+  }
+
+  // HTTP mode
+  else if (transport === 'http') {
+    const { createHTTPServer } = await import('./http-server.js');
+    const httpServer = createHTTPServer({
+      port: port || 3000,
+      nexarion: server,
+    });
+    await httpServer.start();
+
+    // Hot-reload
+    if (flags.config) {
+      const { createConfigWatcher } = await import('./hot-reload.js');
+      const watcher = createConfigWatcher(flags.config, (server as any).bridge);
+      watcher.start();
+    }
   }
 }
 
@@ -132,14 +156,17 @@ async function handleStdioRequest(server: Awaited<ReturnType<typeof createNexari
         jsonrpc: '2.0',
         result: {
           protocolVersion: '2024-11-05',
-          capabilities: { tools: {} },
+          capabilities: { tools: {}, resources: {}, prompts: {} },
           serverInfo: {
             name: 'nexarion-server',
-            version: '0.1.0',
+            version: '0.4.0',
           },
         },
         id,
       };
+
+    case 'notifications/initialized':
+      return { jsonrpc: '2.0', result: {}, id };
 
     case 'tools/list': {
       const result = server.handleListTools();
@@ -152,7 +179,41 @@ async function handleStdioRequest(server: Awaited<ReturnType<typeof createNexari
       return { jsonrpc: '2.0', result, id };
     }
 
-    case 'notifications/initialized':
+    case 'resources/list': {
+      const { agentsToResources } = await import('./mcp-resources.js');
+      const agents = server.listAgents().filter(a => a.status === 'online').map(a => a.card);
+      const resources = agentsToResources(agents);
+      return { jsonrpc: '2.0', result: { resources }, id };
+    }
+
+    case 'resources/read': {
+      const { readResource } = await import('./mcp-resources.js');
+      const { uri } = (params as { uri: string }) || {};
+      const agents = server.listAgents().filter(a => a.status === 'online').map(a => a.card);
+      const content = readResource(uri, agents);
+      return content
+        ? { jsonrpc: '2.0', result: { contents: [content] }, id }
+        : { jsonrpc: '2.0', error: { code: -32602, message: `Resource not found: ${uri}` }, id };
+    }
+
+    case 'prompts/list': {
+      const { agentsToPrompts } = await import('./mcp-resources.js');
+      const agents = server.listAgents().filter(a => a.status === 'online').map(a => a.card);
+      const prompts = agentsToPrompts(agents);
+      return { jsonrpc: '2.0', result: { prompts }, id };
+    }
+
+    case 'prompts/get': {
+      const { getPromptMessages } = await import('./mcp-resources.js');
+      const { name, arguments: args } = (params as { name: string; arguments: Record<string, unknown> }) || {};
+      const agents = server.listAgents().filter(a => a.status === 'online').map(a => a.card);
+      const messages = getPromptMessages(name, args || {}, agents);
+      return messages
+        ? { jsonrpc: '2.0', result: { messages }, id }
+        : { jsonrpc: '2.0', error: { code: -32602, message: `Prompt not found: ${name}` }, id };
+    }
+
+    case 'ping':
       return { jsonrpc: '2.0', result: {}, id };
 
     default:

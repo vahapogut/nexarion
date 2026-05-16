@@ -7,14 +7,20 @@
 
 import { AgentDiscovery } from './discovery.js';
 import { ProtocolTranslator } from './translator.js';
+import { PluginManager } from './plugins.js';
+import { CapabilityAuth } from './auth.js';
+import { EventBridge } from './webhook.js';
 import type {
   AgentCard, MCPTool, MCPToolCallRequest, MCPToolCallResult,
-  BridgeConfig, BridgeStats, DiscoveredAgent, TranslationResult,
+  BridgeConfig, BridgeStats, DiscoveredAgent,
 } from './types.js';
 
 export class NexarionBridge {
   private discovery: AgentDiscovery;
   private translator: ProtocolTranslator;
+  private plugins: PluginManager;
+  private auth: CapabilityAuth;
+  private events: EventBridge;
   private config: BridgeConfig;
   private startTime: number;
   private translationsTotal = 0;
@@ -26,6 +32,9 @@ export class NexarionBridge {
     this.config = config;
     this.discovery = new AgentDiscovery(config.cacheMinutes || 5);
     this.translator = new ProtocolTranslator();
+    this.plugins = new PluginManager();
+    this.auth = new CapabilityAuth();
+    this.events = new EventBridge();
     this.startTime = Date.now();
 
     // Register pre-configured agents
@@ -33,6 +42,15 @@ export class NexarionBridge {
       this.discovery.register(card);
     }
   }
+
+  /** Access the plugin manager for custom middleware */
+  get pluginManager(): PluginManager { return this.plugins; }
+
+  /** Access the auth manager for capability checks */
+  get authManager(): CapabilityAuth { return this.auth; }
+
+  /** Access the event bridge for webhook registration */
+  get eventBridge(): EventBridge { return this.events; }
 
   /** Retry a fetch with exponential backoff. Handles 429 (Rate Limit) and 5xx errors. */
   private async fetchWithRetry(url: string, options: RequestInit, retries?: number): Promise<Response> {
@@ -92,15 +110,29 @@ export class NexarionBridge {
   async callTool(
     toolName: string,
     args: Record<string, unknown>,
-    agentUrl?: string
+    agentUrl?: string,
+    clientId?: string
   ): Promise<MCPToolCallResult> {
     const start = performance.now();
 
     try {
+      // Run beforeTranslate plugin hooks
+      let ctx = await this.plugins.runBeforeTranslate({ toolName, args, agentName: undefined });
+
       const resolved = this.translator.resolveTool(toolName);
       if (!resolved) {
+        this.translationsFailed++;
         return {
           content: [{ type: 'text', text: `Tool "${toolName}" not found. Use listTools() to see available tools.` }],
+          isError: true,
+        };
+      }
+
+      // Auth check
+      if (clientId && !this.auth.check(clientId, resolved.agentName, toolName)) {
+        this.translationsFailed++;
+        return {
+          content: [{ type: 'text', text: `Access denied: client "${clientId}" does not have capability "${toolName}" on agent "${resolved.agentName}".` }],
           isError: true,
         };
       }
@@ -110,6 +142,7 @@ export class NexarionBridge {
       const endpoint = agentUrl || agent?.card.endpoints?.jsonRpc || agent?.card.url;
 
       if (!endpoint) {
+        this.translationsFailed++;
         return {
           content: [{ type: 'text', text: `Agent "${resolved.agentName}" has no reachable endpoint.` }],
           isError: true,
@@ -165,12 +198,35 @@ export class NexarionBridge {
       );
 
       this.translationsTotal++;
+
+      // Run afterTranslate plugin hooks
+      await this.plugins.runAfterTranslate({ toolName, agentName: resolved.agentName, result });
+
+      // Emit webhook event for completed translation
+      this.events.emit({
+        agent: resolved.agentName,
+        taskId: toolName,
+        status: 'completed',
+        data: result,
+      });
+
       return (result.translated as { content: MCPToolCallResult['content'] }) || {
         content: [{ type: 'text', text: JSON.stringify(a2aResponse, null, 2) }],
       };
 
     } catch (err) {
       this.translationsFailed++;
+
+      // Emit webhook event for failed translation
+      this.events.emit({
+        agent: 'unknown',
+        taskId: toolName,
+        status: 'failed',
+        data: { error: err instanceof Error ? err.message : String(err) },
+      });
+
+      // Run plugin error hooks
+      await this.plugins.runOnError({ toolName, error: err instanceof Error ? err : new Error(String(err)) });
       return {
         content: [{ type: 'text', text: `Bridge error: ${err instanceof Error ? err.message : String(err)}` }],
         isError: true,

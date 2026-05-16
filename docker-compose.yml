@@ -6,19 +6,12 @@ services:
     ports:
       - '3000:3000'
     environment:
-      - NEXARION_AGENTS=https://mock-agent:3001
-      - A2A_AUTH_TOKEN=
+      - NEXARION_AGENTS=${NEXARION_AGENTS:-}
+      - A2A_AUTH_TOKEN=${A2A_AUTH_TOKEN:-}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/health"]
       interval: 30s
+      timeout: 5s
       retries: 3
     restart: unless-stopped
-
-  mock-agent:
-    image: node:22-alpine
-    working_dir: /app
-    volumes:
-      - ./packages/mock/dist:/app
-    command: node /app/index.js
-    ports:
-      - '3001:3001'

@@ -1,6 +1,6 @@
 {
   "name": "nexarion-registry",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Nexarion Agent Registry — discover, verify, and manage A2A agents",
   "main": "./dist/index.js",
   "type": "module",

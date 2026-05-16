@@ -1,6 +1,6 @@
 {
   "name": "nexarion-server",
-  "version": "0.1.0",
+  "version": "0.4.0",
   "description": "Nexarion MCP Server — exposes A2A agents as MCP tools via stdio or HTTP",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -14,7 +14,6 @@
     "dev": "tsx src/cli.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
     "nexarion-core": "workspace:*"
   },
   "devDependencies": {
