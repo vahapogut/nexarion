@@ -12,7 +12,7 @@ import { CapabilityAuth } from './auth.js';
 import { EventBridge } from './webhook.js';
 import { createACPClient, type ACPClient } from './acp.js';
 import { Logger } from './logger.js';
-import { AgentUnreachableError, AuthError } from './errors.js';
+import { AgentUnreachableError, AuthError, RateLimitError } from './errors.js';
 import { readSSEStream, streamToMCPResult } from './streaming.js';
 import type {
   AgentCard,
