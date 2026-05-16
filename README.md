@@ -132,13 +132,28 @@ Nexarion translates between MCP and A2A in real-time:
 | Streaming | ✅ | ✅ | ✅ |
 | Self-Hosted | ✅ | ✅ | ✅ |
 
+## Features
+
+- **Dynamic Tool Synthesis** — Each A2A skill auto-converts to MCP tool with inputSchema
+- **Bidirectional Translation** — Real-time MCP ↔ A2A protocol message translation
+- **HTTP + Stdio + SSE** — Local stdio (Claude Desktop) or remote HTTP server
+- **Plugin Middleware** — beforeTranslate/afterTranslate/onError hooks
+- **Capability Auth** — Fine-grained access control per agent/skill/client
+- **Webhook Events** — Push notifications on translation completion/failure
+- **MCP Resources & Prompts** — Agents auto-exposed as resources + prompt templates
+- **Hot-Reload** — Config changes trigger automatic agent rediscovery
+- **SDK** — Build A2A agents in 50 lines with `nexarion-sdk`
+- **CLI** — discover, tools, call, agents, stats, serve, init, validate
+- **VS Code Extension** — Sidebar panel, TreeView, command palette commands
+- **Web Dashboard** — Live fetch + SSE, real-time agent monitoring
+
 ## Quick Start
 
 ```bash
 npm install nexarion-core nexarion-server
 
 # Discover an A2A agent
-npx nexarion-cli discover https://agent.example.com
+npx nexarioncli discover https://agent.example.com
 
 # List exposed MCP tools
 npx nexarion-cli tools
