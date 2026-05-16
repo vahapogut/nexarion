@@ -16,6 +16,8 @@ export interface LogEntry {
 }
 
 export class Logger {
+  public useStderr = false;
+
   constructor(private name: string, private minLevel: LogLevel = 'info') {}
 
   private log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
@@ -30,12 +32,16 @@ export class Logger {
       ...meta,
     };
 
-    if (level === 'error') {
-      console.error(JSON.stringify(entry));
+    const output = JSON.stringify(entry);
+
+    if (this.useStderr) {
+      process.stderr.write(output + '\n');
+    } else if (level === 'error') {
+      console.error(output);
     } else if (level === 'warn') {
-      console.warn(JSON.stringify(entry));
+      console.warn(output);
     } else {
-      console.log(JSON.stringify(entry));
+      console.log(output);
     }
   }
 

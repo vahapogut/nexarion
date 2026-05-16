@@ -66,7 +66,7 @@ async function main() {
 
   // ── Start ──────────────────────────────────────────────────────────
 
-  log.error('[Nexarion] Starting MCP ↔ A2A Bridge...');
+  log.info('[Nexarion] Starting MCP ↔ A2A Bridge...');
 
   const server = await createNexarionServer({
     bridge: bridgeConfig,
@@ -99,6 +99,7 @@ async function main() {
         try {
           const request = JSON.parse(line);
           const response = await handleStdioRequest(server, request);
+          if (response === null) continue; // Skip notifications
           process.stdout.write(JSON.stringify(response) + '\n');
         } catch (err) {
           const errorResponse = {
@@ -140,7 +141,7 @@ async function main() {
   }
 }
 
-async function handleStdioRequest(server: Awaited<ReturnType<typeof createNexarionServer>>, request: { method: string; params?: unknown; id: string | number }) {
+async function handleStdioRequest(server: Awaited<ReturnType<typeof createNexarionServer>>, request: { method: string; params?: unknown; id: string | number }): Promise<Record<string, unknown> | null> {
   const { method, params, id } = request;
 
   switch (method) {
@@ -152,14 +153,14 @@ async function handleStdioRequest(server: Awaited<ReturnType<typeof createNexari
           capabilities: { tools: {}, resources: {}, prompts: {} },
           serverInfo: {
             name: 'nexarion-server',
-            version: '0.4.0',
+            version: '0.5.0',
           },
         },
         id,
       };
 
     case 'notifications/initialized':
-      return { jsonrpc: '2.0', result: {}, id };
+      return null; // Notification — no response per MCP spec
 
     case 'tools/list': {
       const result = server.handleListTools();

@@ -134,7 +134,7 @@ export class NexarionBridge {
 
     try {
       // Run beforeTranslate plugin hooks
-      let ctx = await this.plugins.runBeforeTranslate({ toolName, args, agentName: undefined });
+      await this.plugins.runBeforeTranslate({ toolName, args, agentName: undefined });
 
       const resolved = this.translator.resolveTool(toolName);
       if (!resolved) {
