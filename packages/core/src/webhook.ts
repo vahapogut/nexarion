@@ -69,8 +69,9 @@ export class EventBridge {
     };
 
     if (secret) {
-      const sig = Buffer.from(secret).toString('base64url');
-      headers['X-Nexarion-Signature'] = sig;
+      const crypto = require('crypto');
+      const hmac = crypto.createHmac('sha256', secret).update(body).digest('hex');
+      headers['X-Nexarion-Signature'] = `sha256=${hmac}`;
     }
 
     // Retry up to 3 times

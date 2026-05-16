@@ -85,8 +85,9 @@ export class CapabilityAuth {
       .map(p => ({ agent: p.agent, capabilities: p.allowedCapabilities }));
   }
 
-  /** Sign a capability token (simple JWT-style) */
+  /** Sign a capability token with HMAC-SHA256 */
   signToken(policy: AuthPolicy, secret: string): string {
+    const crypto = require('crypto');
     const token: CapabilityToken = {
       clientId: policy.clientId,
       agent: policy.agent,
@@ -95,14 +96,17 @@ export class CapabilityAuth {
       issuer: 'nexarion',
     };
     const payload = Buffer.from(JSON.stringify(token)).toString('base64url');
-    const sig = Buffer.from(secret).toString('base64url');
+    const sig = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
     return `${payload}.${sig}`;
   }
 
-  /** Verify a capability token */
+  /** Verify a capability token with HMAC-SHA256 */
   verifyToken(tokenStr: string, secret: string): CapabilityToken | null {
+    const crypto = require('crypto');
     const [payload, sig] = tokenStr.split('.');
-    if (sig !== Buffer.from(secret).toString('base64url')) return null;
+    if (!payload || !sig) return null;
+    const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
     try {
       const token = JSON.parse(Buffer.from(payload, 'base64url').toString()) as CapabilityToken;
       if (token.expiresAt < Date.now()) return null;

@@ -12,6 +12,8 @@ export { createACPClient, type ACPClient, type ACPMessage, type ACPResponse } fr
 export { CapabilityAuth, type AuthPolicy, type CapabilityToken } from './auth.js';
 export { EventBridge, type AgentEvent, type WebhookRegistration } from './webhook.js';
 export { PluginManager, type Plugin, type PluginContext } from './plugins.js';
+export { NexarionError, DiscoveryError, TranslationError, AuthError, RateLimitError, AgentUnreachableError, ValidationError } from './errors.js';
+export { Logger, logger, type LogLevel, type LogEntry } from './logger.js';
 export type {
   AgentCard, AgentSkill, AgentCapability, AgentAuth,
   MCPTool, MCPProperty, MCPToolCallRequest, MCPToolCallResult,
