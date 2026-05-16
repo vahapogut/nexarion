@@ -130,6 +130,7 @@ export class NexarionBridge {
     clientId?: string
   ): Promise<MCPToolCallResult> {
     const start = performance.now();
+    this.logger.debug('callTool start', { toolName, clientId });
 
     try {
       // Run beforeTranslate plugin hooks
