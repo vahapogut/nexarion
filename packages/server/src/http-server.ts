@@ -31,9 +31,9 @@ export function createHTTPServer(config: HTTPServerConfig) {
 
   const server = createServer(async (req, res) => {
     // CORS — configurable via X-Nexarion-Origin header or default to *
-    const allowedOrigin = req.headers['x-nexarion-origin'] as string || '*';
+    const allowedOrigin = process.env.CORS_ORIGIN || '*';
     res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Nexarion-Origin');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
 
     // Basic rate limiting (60 req/min per IP)

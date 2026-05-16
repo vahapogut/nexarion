@@ -4,8 +4,9 @@ import { Validator } from '../schema.js';
 describe('Validator — Agent Cards', () => {
   it('should validate a correct agent card', () => {
     const result = Validator.agentCard({
-      name: 'Test', url: 'https://test.agent',
-      skills: [{ id: 's1', name: 'Skill 1' }],
+      name: 'Test', url: 'https://test.agent', description: 'Test', version: '1.0',
+      capabilities: { streaming: false, pushNotifications: false, stateTransitionHistory: false },
+      skills: [{ id: 's1', name: 'Skill 1', description: 'Test skill' }],
     });
     expect(result.valid).toBe(true);
     expect(result.errors.length).toBe(0);

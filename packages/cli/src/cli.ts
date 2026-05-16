@@ -116,7 +116,7 @@ async function main() {
       case 'serve': {
         // Launch real MCP server (stdio mode)
         const { spawn } = await import('child_process');
-        const serverCli = new URL('../../server/dist/cli.js', import.meta.url).pathname;
+        const serverCli = new URL('../../server/dist/cli.js', import.meta.url).pathname.replace(/^\/[A-Z]:/, (m) => m.slice(1));
         const child = spawn('node', [serverCli, '--transport', 'stdio'], {
           stdio: 'inherit',
           env: { ...process.env },

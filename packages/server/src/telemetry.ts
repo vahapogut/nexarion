@@ -48,33 +48,33 @@ class OTELSpan implements Span {
   constructor(private span: unknown) {}
 
   setAttribute(key: string, value: string | number): void {
-    try { (this.span as Record<string, Function>).setAttribute?.(key, value); } catch {}
+    try { (this.span as Record<string, (...args: unknown[]) => unknown>).setAttribute?.(key, value); } catch {}
   }
 
   setStatus(code: 'ok' | 'error', message?: string): void {
     try {
       if (code === 'error') {
-        (this.span as Record<string, Function>).recordException?.(new Error(message));
+        (this.span as Record<string, (...args: unknown[]) => unknown>).recordException?.(new Error(message));
       }
-      (this.span as Record<string, Function>).setStatus?.({ code: code === 'ok' ? 1 : 2, message });
+      (this.span as Record<string, (...args: unknown[]) => unknown>).setStatus?.({ code: code === 'ok' ? 1 : 2, message });
     } catch {}
   }
 
   end(): void {
-    try { (this.span as Record<string, Function>).end?.(); } catch {}
+    try { (this.span as Record<string, (...args: unknown[]) => unknown>).end?.(); } catch {}
   }
 }
 
 export function createTelemetry(config: TelemetryConfig): Tracer {
   if (config.enabled === false) return new NoopTracer();
 
-  // Try to load OpenTelemetry
   try {
-    const otel = require('@opentelemetry/api');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const otel = eval('require')('@opentelemetry/api');
+    if (!otel) return new NoopTracer();
     const tracer = otel.trace.getTracer(config.serviceName) as {
       startSpan(name: string, opts?: Record<string, unknown>): unknown;
     };
-
     return {
       startSpan(name: string, attributes?: Record<string, string | number>): Span {
         const span = tracer.startSpan(name, attributes ? { attributes } : undefined);

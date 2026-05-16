@@ -6,6 +6,8 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "lint": "eslint packages/*/src --ext .ts",
+    "format": "prettier --write packages/*/src/**/*.ts",
     "dev": "pnpm --filter nexarion-server dev"
   },
   "keywords": [
@@ -18,10 +20,16 @@
     "agent-to-agent",
     "interoperability"
   ],
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "author": "Abdulvahap OGUT <info@ipeclabs.com>",
   "license": "Apache-2.0",
   "devDependencies": {
-    "@types/node": "^25.8.0"
+    "@types/node": "^25.8.0",
+    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/parser": "^8.59.3",
+    "eslint": "^10.4.0",
+    "prettier": "^3.8.3"
   }
 }

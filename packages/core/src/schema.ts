@@ -29,12 +29,17 @@ export class Validator {
 
     if (typeof card.name !== 'string') errors.push('Missing or invalid "name" (string required)');
     if (typeof card.url !== 'string') errors.push('Missing or invalid "url" (string required)');
+    if (typeof card.description !== 'string') errors.push('Missing or invalid "description" (string required)');
+    if (typeof card.version !== 'string') errors.push('Missing or invalid "version" (string required)');
     if (!card.skills || !Array.isArray(card.skills)) errors.push('Missing or invalid "skills" (array required)');
+    if (!card.capabilities || typeof card.capabilities !== 'object') errors.push('Missing or invalid "capabilities" (object required)');
 
     if (Array.isArray(card.skills)) {
       for (let i = 0; i < card.skills.length; i++) {
         const skill = card.skills[i] as Record<string, unknown>;
         if (typeof skill.id !== 'string') errors.push(`Skill[${i}]: missing "id"`);
+        if (typeof skill.name !== 'string') errors.push(`Skill[${i}]: missing "name"`);
+        if (typeof skill.description !== 'string') errors.push(`Skill[${i}]: missing "description"`);
         if (typeof skill.name !== 'string') errors.push(`Skill[${i}]: missing "name"`);
       }
     }
