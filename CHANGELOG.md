@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.5.0 (2026-05-16)
+
+- Web dashboard JS rewrite, CORS env config, ESLint+Prettier, rate limiting
+- ACP client rewrite with safeFetch, schema validator expanded
+- CLI serve spawns real server, graceful shutdown, hot-reload dedup
+- Prompt parse fix for multi-word agent names
+- All 8 packages synced to 0.5.0
+
 ## v0.4.0 (2026-05-16)
 
 ### Critical — Dead Code Elimination

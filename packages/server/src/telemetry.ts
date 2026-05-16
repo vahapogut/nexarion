@@ -65,12 +65,14 @@ class OTELSpan implements Span {
   }
 }
 
+import { createRequire } from 'node:module';
+
 export function createTelemetry(config: TelemetryConfig): Tracer {
   if (config.enabled === false) return new NoopTracer();
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const otel = eval('require')('@opentelemetry/api');
+    const req = createRequire(import.meta.url);
+    const otel = req('@opentelemetry/api');
     if (!otel) return new NoopTracer();
     const tracer = otel.trace.getTracer(config.serviceName) as {
       startSpan(name: string, opts?: Record<string, unknown>): unknown;

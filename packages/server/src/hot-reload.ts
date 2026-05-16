@@ -39,14 +39,6 @@ export function createConfigWatcher(
           console.log(`[Nexarion] Hot-reload: discovering ${urls.length} agents...`);
           const agents = await bridge.discover(urls);
           const online = agents.filter(a => a.status === 'online');
-
-          // Register discovered agents
-          for (const agent of agents) {
-            if (agent.status === 'online') {
-              bridge.registerAgent(agent.card);
-            }
-          }
-
           console.log(`[Nexarion] Hot-reload complete: ${online.length}/${agents.length} online`);
           onReload?.(urls);
         }

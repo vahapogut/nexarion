@@ -40,7 +40,6 @@ export class Validator {
         if (typeof skill.id !== 'string') errors.push(`Skill[${i}]: missing "id"`);
         if (typeof skill.name !== 'string') errors.push(`Skill[${i}]: missing "name"`);
         if (typeof skill.description !== 'string') errors.push(`Skill[${i}]: missing "description"`);
-        if (typeof skill.name !== 'string') errors.push(`Skill[${i}]: missing "name"`);
       }
     }
 

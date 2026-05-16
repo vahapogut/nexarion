@@ -145,8 +145,9 @@ export function getPromptMessages(
   args: Record<string, unknown>,
   agents: AgentCard[]
 ): MCPPromptMessage[] | null {
-  const [agentName, skillId] = promptName.split('_');
-  const agent = agents.find(a => a.name === agentName);
+  // Find agent by matching prompt name prefix (handles agents with underscores in name)
+  const agent = agents.find(a => promptName.startsWith(a.name + '_')) || agents.find(a => promptName.startsWith(a.name.split('_')[0] + '_'));
+  const skillId = agent ? promptName.slice(agent.name.length + 1) : promptName;
   if (!agent) return null;
 
   const message = (args.message as string) || 'Hello';

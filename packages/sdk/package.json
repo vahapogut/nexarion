@@ -1,6 +1,7 @@
 {
   "name": "nexarion-sdk",
-  "version": "0.4.0",
+  "version": "0.5.0",
+  "engines": { "node": ">=20" },
   "description": "Nexarion SDK — build A2A-compatible agents in 50 lines of TypeScript",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
