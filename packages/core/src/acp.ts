@@ -56,31 +56,31 @@ export function createACPClient(token?: string): ACPClient {
 
     async sendMessage(url: string, message: ACPMessage): Promise<ACPResponse> {
       const res = await fetch(`${url.replace(/\/$/, '')}/message`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(message),
+        method: 'POST', headers, body: JSON.stringify(message), signal: AbortSignal.timeout(15000),
       });
+      if (!res.ok) throw new Error(`ACP sendMessage failed: ${res.status}`);
       return res.json() as Promise<ACPResponse>;
     },
 
     async submitTask(url: string, message: ACPMessage): Promise<ACPResponse> {
       const res = await fetch(`${url.replace(/\/$/, '')}/task`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify(message),
+        method: 'POST', headers, body: JSON.stringify(message), signal: AbortSignal.timeout(15000),
       });
+      if (!res.ok) throw new Error(`ACP submitTask failed: ${res.status}`);
       return res.json() as Promise<ACPResponse>;
     },
 
     async getTaskStatus(url: string, taskId: string): Promise<ACPResponse> {
-      const res = await fetch(`${url.replace(/\/$/, '')}/task/${taskId}`, { headers });
+      const res = await fetch(`${url.replace(/\/$/, '')}/task/${taskId}`, {
+        headers, signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) throw new Error(`ACP getTaskStatus failed: ${res.status}`);
       return res.json() as Promise<ACPResponse>;
     },
 
     async cancelTask(url: string, taskId: string): Promise<void> {
-      await fetch(`${url.replace(/\/$/, '')}/task/${taskId}/cancel`, {
-        method: 'POST',
-        headers,
+      const res = await fetch(`${url.replace(/\/$/, '')}/task/${taskId}/cancel`, {
+        method: 'POST', headers, signal: AbortSignal.timeout(10000),
       });
     },
   };

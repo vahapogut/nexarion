@@ -27,13 +27,15 @@ export interface NexarionServerConfig {
 // ─── MCP Server Implementation ────────────────────────────────────────
 
 export class NexarionServer {
-  private bridge: NexarionBridge;
+  private _bridge: NexarionBridge;
   private config: NexarionServerConfig;
 
   constructor(config: NexarionServerConfig) {
     this.config = config;
-    this.bridge = new NexarionBridge(config.bridge);
+    this._bridge = new NexarionBridge(config.bridge);
   }
+
+  get bridge(): NexarionBridge { return this._bridge; }
 
   /**
    * Start the server. Discovers agents and exposes them as MCP tools.
@@ -42,7 +44,7 @@ export class NexarionServer {
     // Auto-discover agents
     if (this.config.discover && this.config.discover.length > 0) {
       if (this.config.debug) console.log(`[Nexarion] Discovering ${this.config.discover.length} agents...`);
-      const agents = await this.bridge.discover(this.config.discover);
+      const agents = await this._bridge.discover(this.config.discover);
       for (const agent of agents) {
         if (this.config.debug) {
           console.log(`[Nexarion] Discovered: ${agent.card.name} (${agent.status}) — ${agent.card.skills.length} skills`);
@@ -50,7 +52,7 @@ export class NexarionServer {
       }
     }
 
-    const stats = this.bridge.getStats();
+    const stats = this._bridge.getStats();
     if (this.config.debug) {
       console.log(`[Nexarion] Ready — ${stats.agentsDiscovered} agents, ${stats.toolsExposed} MCP tools exposed`);
     }
@@ -60,21 +62,21 @@ export class NexarionServer {
    * Handle MCP `tools/list` request.
    */
   handleListTools(): { tools: MCPTool[] } {
-    return { tools: this.bridge.listTools() };
+    return { tools: this._bridge.listTools() };
   }
 
   /**
    * Handle MCP `tools/call` request.
    */
   async handleCallTool(name: string, args: Record<string, unknown>) {
-    return this.bridge.callTool(name, args);
+    return this._bridge.callTool(name, args);
   }
 
   /**
    * Get server health status.
    */
   getHealth() {
-    const stats = this.bridge.getStats();
+    const stats = this._bridge.getStats();
     return {
       status: 'healthy', agents: stats.agentsDiscovered, tools: stats.toolsExposed,
       translations: stats.translationsTotal, errors: stats.translationsFailed,
@@ -86,14 +88,14 @@ export class NexarionServer {
    * Get server statistics.
    */
   getStats() {
-    return this.bridge.getStats();
+    return this._bridge.getStats();
   }
 
   /**
    * List all discovered agents.
    */
   listAgents() {
-    return this.bridge.listAgents();
+    return this._bridge.listAgents();
   }
 }
 

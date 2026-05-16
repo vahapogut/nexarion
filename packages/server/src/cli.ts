@@ -124,7 +124,7 @@ async function main() {
     // Hot-reload: watch config file
     if (flags.config) {
       const { createConfigWatcher } = await import('./hot-reload.js');
-      const watcher = createConfigWatcher(flags.config, (server as any).bridge);
+      const watcher = createConfigWatcher(flags.config, server.bridge);
       watcher.start();
     }
   }
@@ -141,7 +141,7 @@ async function main() {
     // Hot-reload
     if (flags.config) {
       const { createConfigWatcher } = await import('./hot-reload.js');
-      const watcher = createConfigWatcher(flags.config, (server as any).bridge);
+      const watcher = createConfigWatcher(flags.config, server.bridge);
       watcher.start();
     }
   }

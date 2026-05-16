@@ -7,6 +7,7 @@
  * 3. DNS-SD / mDNS (planned)
  */
 
+import { Validator } from './schema.js';
 import type { AgentCard, DiscoveredAgent } from './types.js';
 
 export class AgentDiscovery {
@@ -48,6 +49,8 @@ export class AgentDiscovery {
       }
 
       const card = await response.json() as AgentCard;
+      const validation = Validator.agentCard(card);
+      if (!validation.valid) throw new Error(`Invalid Agent Card: ${validation.errors.join(", ")}`);
       if (!card.name || !card.url) {
         throw new Error('Invalid agent card: missing name or url');
       }
