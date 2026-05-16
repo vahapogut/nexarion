@@ -1,0 +1,8 @@
+- name: bug
+  color: d73a4a
+- name: enhancement
+  color: a2eeef
+- name: documentation
+  color: 0075ca
+- name: good first issue
+  color: 7057ff
