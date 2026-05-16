@@ -183,10 +183,13 @@ See `examples/claude-desktop/` for full setup.
 
 | Package | Description |
 |---|---|
-| `nexarion-core` | Core bridge engine — discovery, translation, routing |
-| `nexarion-server` | MCP server — stdio + HTTP, JSON-RPC handler |
-| `nexarioncli` | CLI — discover, tools, call, agents, stats, serve |
-| `nexarion-web` | Web dashboard — monitor agents, tools, traffic |
+| `nexarion-core` | Core bridge engine — discovery, translation, routing, auth, plugins |
+| `nexarion-server` | MCP server — stdio + HTTP, SSE, JSON-RPC, graceful shutdown |
+| `nexarion-sdk` | Agent builder SDK — create A2A agents in 50 lines |
+| `nexarion-registry` | Agent directory — search, health-check, verification |
+| `nexarioncli` | CLI — discover, tools, call, agents, stats, serve, init, validate |
+| `nexarion-web` | Web dashboard — live fetch + SSE, agent monitoring |
+| `nexarion-vscode` | VS Code extension — sidebar, TreeView, command palette |
 
 ## Contributing
 

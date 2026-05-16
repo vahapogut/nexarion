@@ -26,11 +26,29 @@ export function createHTTPServer(config: HTTPServerConfig) {
 
   // Track SSE clients
   const sseClients: Set<ServerResponse> = new Set();
+  // Rate limit tracking (in-memory, per-server)
+  const rateLimitMap = new Map<string, { count: number; reset: number }>();
 
   const server = createServer(async (req, res) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    // CORS — configurable via X-Nexarion-Origin header or default to *
+    const allowedOrigin = req.headers['x-nexarion-origin'] as string || '*';
+    res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Nexarion-Origin');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+
+    // Basic rate limiting (60 req/min per IP)
+    const ip = req.socket.remoteAddress || 'unknown';
+    const rateKey = `rate:${ip}`;
+    const now = Date.now();
+    const rateData = (rateLimitMap.get(rateKey) || { count: 0, reset: now + 60000 });
+    if (now > rateData.reset) { rateData.count = 0; rateData.reset = now + 60000; }
+    rateData.count++;
+    rateLimitMap.set(rateKey, rateData);
+    if (rateData.count > 60) {
+      res.writeHead(429, { 'Retry-After': '60' });
+      res.end(JSON.stringify({ error: 'Rate limit exceeded. Try again in 60 seconds.' }));
+      return;
+    }
 
     if (req.method === 'OPTIONS') {
       res.writeHead(204); res.end(); return;

@@ -15,35 +15,40 @@ pnpm test
 ```
 nexarion/
   packages/
-    core/        Nexus bridge engine (types, discovery, translator, bridge)
-    server/      MCP server (stdio/HTTP, JSON-RPC handler)
-    cli/         CLI tools (discover, call, serve)
-    web/         Web dashboard
-  examples/      Integration examples
+    core/      Bridge engine (types, discovery, translator, bridge, auth, plugins, webhook, acp)
+    server/    MCP server (stdio/HTTP, hot-reload, telemetry, MCP resources/prompts)
+    cli/       CLI tools (discover, call, serve, init wizard, validate)
+    web/       Web dashboard (live fetch + SSE)
+    sdk/       Agent SDK (createAgent in 50 lines)
+    registry/  Agent directory (search, health-check)
+    vscode/    VS Code extension (sidebar, TreeView, commands)
+  examples/    E2E demo + Claude Desktop config
 ```
 
 ## Running Tests
 
 ```bash
-pnpm test                    # All packages
-pnpm --filter nexarion-core test   # Core only
+pnpm test
+pnpm --filter nexarion-core test
+vitest run --coverage
 ```
 
 ## Commit Style
 
 - `feat:` new feature
-- `fix:` bug fix
+- `fix:` bug fix  
 - `docs:` documentation
 - `test:` tests
 - `chore:` build/config
 
-## Adding a New A2A Agent Transport
+## Adding a New Transport
 
-1. Implement the `Transport` interface in `packages/core/src/`
-2. Add discovery logic
-3. Add tests
-4. Update README
+1. Implement `Transport` interface in `packages/core/src/`
+2. Add to `TransportType`
+3. Add `createTransport` case
+4. Add tests
+5. Update README
 
 ## License
 
-Apache-2.0. All contributions are under this license.
+Apache-2.0. All contributions under this license.
