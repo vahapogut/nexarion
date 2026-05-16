@@ -1,6 +1,6 @@
 {
   "name": "nexarion-server",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "engines": { "node": ">=20" },
   "description": "Nexarion MCP Server — exposes A2A agents as MCP tools via stdio or HTTP",
   "main": "./dist/index.js",

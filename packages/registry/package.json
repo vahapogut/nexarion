@@ -5,6 +5,7 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js", "require": "./dist/index.cjs" } },
   "engines": { "node": ">=20" },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts",

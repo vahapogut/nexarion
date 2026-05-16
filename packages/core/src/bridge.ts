@@ -13,9 +13,15 @@ import { EventBridge } from './webhook.js';
 import { createACPClient, type ACPClient } from './acp.js';
 import { Logger } from './logger.js';
 import { AgentUnreachableError, AuthError } from './errors.js';
+import { readSSEStream, streamToMCPResult } from './streaming.js';
 import type {
-  AgentCard, MCPTool, MCPToolCallRequest, MCPToolCallResult,
-  BridgeConfig, BridgeStats, DiscoveredAgent,
+  AgentCard,
+  MCPTool,
+  MCPToolCallRequest,
+  MCPToolCallResult,
+  BridgeConfig,
+  BridgeStats,
+  DiscoveredAgent,
 } from './types.js';
 
 export class NexarionBridge {
@@ -53,16 +59,26 @@ export class NexarionBridge {
   }
 
   /** Access the plugin manager for custom middleware */
-  get pluginManager(): PluginManager { return this.plugins; }
+  get pluginManager(): PluginManager {
+    return this.plugins;
+  }
 
   /** Access the auth manager for capability checks */
-  get authManager(): CapabilityAuth { return this.auth; }
+  get authManager(): CapabilityAuth {
+    return this.auth;
+  }
 
   /** Access the event bridge for webhook registration */
-  get eventBridge(): EventBridge { return this.events; }
+  get eventBridge(): EventBridge {
+    return this.events;
+  }
 
   /** Retry a fetch with exponential backoff. Handles 429 (Rate Limit) and 5xx errors. */
-  private async fetchWithRetry(url: string, options: RequestInit, retries?: number): Promise<Response> {
+  private async fetchWithRetry(
+    url: string,
+    options: RequestInit,
+    retries?: number,
+  ): Promise<Response> {
     const maxRetries = retries ?? this.config.retry?.maxRetries ?? this.maxRetries;
     const baseDelay = this.config.retry?.initialDelayMs ?? this.retryDelay;
     const maxDelay = this.config.retry?.maxDelayMs ?? 30000;
@@ -78,18 +94,24 @@ export class NexarionBridge {
         // Rate limit — respect Retry-After header
         if (response.status === 429 && attempt < maxRetries) {
           const retryAfter = response.headers.get('Retry-After');
-          const delay = retryAfter ? parseInt(retryAfter, 10) * 1000 : Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
-          await new Promise(r => setTimeout(r, delay));
+          const delay = retryAfter
+            ? parseInt(retryAfter, 10) * 1000
+            : Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
+          await new Promise((r) => setTimeout(r, delay));
           continue;
         }
 
         // Server error — retry with backoff
         if (attempt < maxRetries) {
-          await new Promise(r => setTimeout(r, Math.min(baseDelay * Math.pow(2, attempt), maxDelay)));
+          await new Promise((r) =>
+            setTimeout(r, Math.min(baseDelay * Math.pow(2, attempt), maxDelay)),
+          );
         }
       } catch (err) {
         if (attempt === maxRetries) throw err;
-        await new Promise(r => setTimeout(r, Math.min(baseDelay * Math.pow(2, attempt), maxDelay)));
+        await new Promise((r) =>
+          setTimeout(r, Math.min(baseDelay * Math.pow(2, attempt), maxDelay)),
+        );
       }
     }
     throw new Error(`Fetch failed after ${maxRetries} retries`);
@@ -113,9 +135,10 @@ export class NexarionBridge {
    * List all MCP tools from all discovered agents.
    */
   listTools(): MCPTool[] {
-    const agents = this.discovery.listAgents()
-      .filter(a => a.status === 'online')
-      .map(a => a.card);
+    const agents = this.discovery
+      .listAgents()
+      .filter((a) => a.status === 'online')
+      .map((a) => a.card);
     return this.translator.getAllTools(agents);
   }
 
@@ -127,7 +150,7 @@ export class NexarionBridge {
     toolName: string,
     args: Record<string, unknown>,
     agentUrl?: string,
-    clientId?: string
+    clientId?: string,
   ): Promise<MCPToolCallResult> {
     const start = performance.now();
     this.logger.debug('callTool start', { toolName, clientId });
@@ -140,7 +163,12 @@ export class NexarionBridge {
       if (!resolved) {
         this.translationsFailed++;
         return {
-          content: [{ type: 'text', text: `Tool "${toolName}" not found. Use listTools() to see available tools.` }],
+          content: [
+            {
+              type: 'text',
+              text: `Tool "${toolName}" not found. Use listTools() to see available tools.`,
+            },
+          ],
           isError: true,
         };
       }
@@ -149,36 +177,47 @@ export class NexarionBridge {
       if (clientId && !this.auth.check(clientId, resolved.agentName, toolName)) {
         this.translationsFailed++;
         return {
-          content: [{ type: 'text', text: `Access denied: client "${clientId}" does not have capability "${toolName}" on agent "${resolved.agentName}".` }],
+          content: [
+            {
+              type: 'text',
+              text: `Access denied: client "${clientId}" does not have capability "${toolName}" on agent "${resolved.agentName}".`,
+            },
+          ],
           isError: true,
         };
       }
 
       // Find the agent and its best endpoint
-      const agent = this.discovery.listAgents().find(a => a.card.name === resolved.agentName);
+      const agent = this.discovery.listAgents().find((a) => a.card.name === resolved.agentName);
       if (!agent) {
         this.translationsFailed++;
         throw new AgentUnreachableError(`Agent "${resolved.agentName}" not found`);
       }
 
-      const useREST = agent.card.endpoints?.rest;
-      const endpoint = agentUrl || agent.card.endpoints?.jsonRpc || agent.card.endpoints?.rest || agent.card.url;
+      const useREST = !!agent.card.endpoints?.rest;
+      const endpoint =
+        agentUrl || agent.card.endpoints?.jsonRpc || agent.card.endpoints?.rest || agent.card.url;
 
       if (!endpoint) {
         this.translationsFailed++;
-        throw new AgentUnreachableError(`Agent "${resolved.agentName}" has no reachable endpoint`, endpoint);
+        throw new AgentUnreachableError(
+          `Agent "${resolved.agentName}" has no reachable endpoint`,
+          endpoint,
+        );
       }
 
       // Translate MCP → A2A
       const translated = this.translator.translateMCPtoA2A(
         { name: toolName, arguments: args },
-        endpoint
+        endpoint,
       );
 
       if (!translated.success) {
         this.translationsFailed++;
         return {
-          content: [{ type: 'text', text: `Translation failed: ${translated.warnings?.join(', ')}` }],
+          content: [
+            { type: 'text', text: `Translation failed: ${translated.warnings?.join(', ')}` },
+          ],
           isError: true,
         };
       }
@@ -198,7 +237,13 @@ export class NexarionBridge {
         };
         const acpResp = await this.acp.sendMessage(agent.card.url, acpMessage);
         a2aResponse = {
-          message: { role: 'agent', parts: [{ type: 'text', text: acpResp.text }, ...(acpResp.data ? [{ type: 'data', data: acpResp.data }] : [])] },
+          message: {
+            role: 'agent',
+            parts: [
+              { type: 'text', text: acpResp.text },
+              ...(acpResp.data ? [{ type: 'data', data: acpResp.data }] : []),
+            ],
+          },
           status: { state: acpResp.status },
         };
       } else {
@@ -214,7 +259,9 @@ export class NexarionBridge {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(this.config.auth?.a2aToken ? { 'Authorization': `Bearer ${this.config.auth.a2aToken}` } : {}),
+            ...(this.config.auth?.a2aToken
+              ? { Authorization: `Bearer ${this.config.auth.a2aToken}` }
+              : {}),
           },
           body: JSON.stringify(rpcPayload),
           signal: AbortSignal.timeout(30000),
@@ -225,12 +272,23 @@ export class NexarionBridge {
           throw new AgentUnreachableError(`A2A agent returned ${response.status}`, endpoint);
         }
 
-        a2aResponse = await response.json() as Record<string, unknown>;
+        // Streaming: if both sides support it, read SSE stream
+        if (useStreaming && response.headers.get('content-type')?.includes('text/event-stream')) {
+          const events: import('./streaming.js').StreamEvent[] = [];
+          for await (const ev of readSSEStream(response)) {
+            events.push(ev);
+          }
+          const streamResult = streamToMCPResult(events);
+          this.translationsTotal++;
+          return streamResult;
+        }
+
+        a2aResponse = (await response.json()) as Record<string, unknown>;
       }
       // Translate A2A → MCP
       const result = this.translator.translateA2AtoMCP(
         a2aResponse.result || a2aResponse,
-        resolved.skill?.name
+        resolved.skill?.name,
       );
 
       this.translationsTotal++;
@@ -246,10 +304,11 @@ export class NexarionBridge {
         data: result,
       });
 
-      return (result.translated as { content: MCPToolCallResult['content'] }) || {
-        content: [{ type: 'text', text: JSON.stringify(a2aResponse, null, 2) }],
-      };
-
+      return (
+        (result.translated as { content: MCPToolCallResult['content'] }) || {
+          content: [{ type: 'text', text: JSON.stringify(a2aResponse, null, 2) }],
+        }
+      );
     } catch (err) {
       this.translationsFailed++;
 
@@ -262,9 +321,17 @@ export class NexarionBridge {
       });
 
       // Run plugin error hooks
-      await this.plugins.runOnError({ toolName, error: err instanceof Error ? err : new Error(String(err)) });
+      await this.plugins.runOnError({
+        toolName,
+        error: err instanceof Error ? err : new Error(String(err)),
+      });
       return {
-        content: [{ type: 'text', text: `Bridge error: ${err instanceof Error ? err.message : String(err)}` }],
+        content: [
+          {
+            type: 'text',
+            text: `Bridge error: ${err instanceof Error ? err.message : String(err)}`,
+          },
+        ],
         isError: true,
       };
     }
@@ -288,10 +355,13 @@ export class NexarionBridge {
       translationsTotal: this.translationsTotal,
       translationsFailed: this.translationsFailed,
       uptimeMs: Date.now() - this.startTime,
-      lastDiscovery: agents.length > 0
-        ? agents.reduce((latest, a) =>
-            a.discoveredAt > latest ? a.discoveredAt : latest, agents[0].discoveredAt)
-        : null,
+      lastDiscovery:
+        agents.length > 0
+          ? agents.reduce(
+              (latest, a) => (a.discoveredAt > latest ? a.discoveredAt : latest),
+              agents[0].discoveredAt,
+            )
+          : null,
     };
   }
 

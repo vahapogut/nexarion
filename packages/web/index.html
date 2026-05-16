@@ -109,10 +109,14 @@ async function fetchAll(){
     if(!a.length){al.innerHTML='<span style="color:var(--muted)">No agents connected.</span>';}
     else{al.innerHTML=a.map(x=>`<div class="agent-row"><div><span class="dot ${x.status}"></span><b>${x.name}</b></div><div style="color:var(--muted)">${x.skills} skills · ${x.latency}ms</div><div style="color:${x.status==='online'?'var(--green)':'var(--red)'}">${x.status}</div></div>`).join('');}
 
-    // Update tool select
-    const st=await(await fetch(b+'/stats')).json();
+    // Fetch tools list via MCP JSON-RPC
+    const toolsRes=await fetch(b+'/mcp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',method:'tools/list',params:{},id:'tl'})});
+    const toolsData=await toolsRes.json();
+    const tools=toolsData.result?.tools||[];
     const sel=$('tool-select');sel.innerHTML='<option>Select a tool...</option>';
-    log('ok','Fetched: '+h.agents+' agents, '+h.tools+' tools');
+    for(const t of tools){sel.innerHTML+=`<option value="${t.name}">${t.name}</option>`;}
+
+    log('ok','Fetched: '+h.agents+' agents, '+tools.length+' tools');
   }catch(e){log('err',e.message)}
 }
 

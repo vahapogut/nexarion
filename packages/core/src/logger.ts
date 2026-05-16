@@ -18,7 +18,10 @@ export interface LogEntry {
 export class Logger {
   public useStderr = false;
 
-  constructor(private name: string, private minLevel: LogLevel = 'info') {}
+  constructor(
+    private name: string,
+    private minLevel: LogLevel = 'info',
+  ) {}
 
   private log(level: LogLevel, message: string, meta?: Record<string, unknown>) {
     const priority = { debug: 0, info: 1, warn: 2, error: 3 };
@@ -45,14 +48,23 @@ export class Logger {
     }
   }
 
-  debug(msg: string, meta?: Record<string, unknown>) { this.log('debug', msg, meta); }
-  info(msg: string, meta?: Record<string, unknown>) { this.log('info', msg, meta); }
-  warn(msg: string, meta?: Record<string, unknown>) { this.log('warn', msg, meta); }
-  error(msg: string, meta?: Record<string, unknown>) { this.log('error', msg, meta); }
+  debug(msg: string, meta?: Record<string, unknown>) {
+    this.log('debug', msg, meta);
+  }
+  info(msg: string, meta?: Record<string, unknown>) {
+    this.log('info', msg, meta);
+  }
+  warn(msg: string, meta?: Record<string, unknown>) {
+    this.log('warn', msg, meta);
+  }
+  error(msg: string, meta?: Record<string, unknown>) {
+    this.log('error', msg, meta);
+  }
 
   /** Create a child logger with correlation ID */
   child(correlationId: string): Logger {
     const child = new Logger(`${this.name}[${correlationId}]`, this.minLevel);
+    child.useStderr = this.useStderr;
     const origLog = (child as any).log.bind(child);
     (child as any).log = (level: LogLevel, msg: string, meta?: Record<string, unknown>) => {
       origLog(level, msg, { ...meta, correlationId });
