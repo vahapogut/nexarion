@@ -24,31 +24,31 @@ describe('CapabilityAuth', () => {
     expect(caps.length).toBe(2);
   });
 
-  it('should sign and verify HMAC tokens', () => {
+  it('should sign and verify HMAC tokens', async () => {
     const auth = new CapabilityAuth();
-    const token = auth.signToken(
+    const token = await auth.signToken(
       { clientId: 'c1', agent: 'A', allowedCapabilities: ['x'] }, 'my-secret-123'
     );
     expect(token).toContain('.');
-    const verified = auth.verifyToken(token, 'my-secret-123');
+    const verified = await auth.verifyToken(token, 'my-secret-123');
     expect(verified).not.toBeNull();
     expect(verified!.clientId).toBe('c1');
     expect(verified!.capabilities).toEqual(['x']);
   });
 
-  it('should reject token with wrong secret', () => {
+  it('should reject token with wrong secret', async () => {
     const auth = new CapabilityAuth();
-    const token = auth.signToken(
+    const token = await auth.signToken(
       { clientId: 'c1', agent: 'A', allowedCapabilities: ['x'] }, 'secret-a'
     );
-    expect(auth.verifyToken(token, 'secret-b')).toBeNull();
+    expect(await auth.verifyToken(token, 'secret-b')).toBeNull();
   });
 
   it('should reject expired token', async () => {
     const auth = new CapabilityAuth();
-    const token = auth.signToken(
+    const token = await auth.signToken(
       { clientId: 'c1', agent: 'A', allowedCapabilities: ['x'], expiresAt: Date.now() - 1000 }, 'secret'
     );
-    expect(auth.verifyToken(token, 'secret')).toBeNull();
+    expect(await auth.verifyToken(token, 'secret')).toBeNull();
   });
 });

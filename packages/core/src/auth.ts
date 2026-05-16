@@ -86,8 +86,8 @@ export class CapabilityAuth {
   }
 
   /** Sign a capability token with HMAC-SHA256 */
-  signToken(policy: AuthPolicy, secret: string): string {
-    const crypto = require('crypto');
+  async signToken(policy: AuthPolicy, secret: string): Promise<string> {
+    const { createHmac } = await import('node:crypto');
     const token: CapabilityToken = {
       clientId: policy.clientId,
       agent: policy.agent,
@@ -96,17 +96,17 @@ export class CapabilityAuth {
       issuer: 'nexarion',
     };
     const payload = Buffer.from(JSON.stringify(token)).toString('base64url');
-    const sig = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
+    const sig = createHmac('sha256', secret).update(payload).digest('base64url');
     return `${payload}.${sig}`;
   }
 
   /** Verify a capability token with HMAC-SHA256 */
-  verifyToken(tokenStr: string, secret: string): CapabilityToken | null {
-    const crypto = require('crypto');
+  async verifyToken(tokenStr: string, secret: string): Promise<CapabilityToken | null> {
+    const { createHmac: vCreateHmac, timingSafeEqual: vTSE } = await import('node:crypto');
     const [payload, sig] = tokenStr.split('.');
     if (!payload || !sig) return null;
-    const expected = crypto.createHmac('sha256', secret).update(payload).digest('base64url');
-    if (!crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expected))) return null;
+    const expected = vCreateHmac('sha256', secret).update(payload).digest('base64url');
+    if (!vTSE(Buffer.from(sig), Buffer.from(expected))) return null;
     try {
       const token = JSON.parse(Buffer.from(payload, 'base64url').toString()) as CapabilityToken;
       if (token.expiresAt < Date.now()) return null;

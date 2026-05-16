@@ -129,8 +129,8 @@ export function createHTTPServer(config: HTTPServerConfig) {
               jsonrpc: '2.0',
               result: {
                 protocolVersion: '2024-11-05',
-                capabilities: { tools: {} },
-                serverInfo: { name: 'nexarion-server', version: '0.3.2' },
+                capabilities: { tools: {}, resources: {}, prompts: {} },
+                serverInfo: { name: 'nexarion-server', version: '0.4.0' },
               },
               id,
             }));
@@ -146,6 +146,48 @@ export function createHTTPServer(config: HTTPServerConfig) {
             res.end(JSON.stringify({ jsonrpc: '2.0', result, id }));
             break;
           }
+
+          case 'resources/list': {
+            const { agentsToResources } = await import('./mcp-resources.js');
+            const agents = nexarion.listAgents().filter(a => a.status === 'online').map(a => a.card);
+            const resources = agentsToResources(agents);
+            res.end(JSON.stringify({ jsonrpc: '2.0', result: { resources }, id }));
+            break;
+          }
+
+          case 'resources/read': {
+            const { readResource } = await import('./mcp-resources.js');
+            const { uri } = (params as { uri: string }) || {};
+            const agents = nexarion.listAgents().filter(a => a.status === 'online').map(a => a.card);
+            const content = readResource(uri, agents);
+            res.end(content
+              ? JSON.stringify({ jsonrpc: '2.0', result: { contents: [content] }, id })
+              : JSON.stringify({ jsonrpc: '2.0', error: { code: -32602, message: `Resource not found: ${uri}` }, id }));
+            break;
+          }
+
+          case 'prompts/list': {
+            const { agentsToPrompts } = await import('./mcp-resources.js');
+            const agents = nexarion.listAgents().filter(a => a.status === 'online').map(a => a.card);
+            const prompts = agentsToPrompts(agents);
+            res.end(JSON.stringify({ jsonrpc: '2.0', result: { prompts }, id }));
+            break;
+          }
+
+          case 'prompts/get': {
+            const { getPromptMessages } = await import('./mcp-resources.js');
+            const { name, arguments: args } = (params as { name: string; arguments: Record<string, unknown> }) || {};
+            const agents = nexarion.listAgents().filter(a => a.status === 'online').map(a => a.card);
+            const messages = getPromptMessages(name, args || {}, agents);
+            res.end(messages
+              ? JSON.stringify({ jsonrpc: '2.0', result: { messages }, id })
+              : JSON.stringify({ jsonrpc: '2.0', error: { code: -32602, message: `Prompt not found: ${name}` }, id }));
+            break;
+          }
+
+          case 'ping':
+            res.end(JSON.stringify({ jsonrpc: '2.0', result: {}, id }));
+            break;
 
           default:
             res.end(JSON.stringify({
@@ -164,8 +206,19 @@ export function createHTTPServer(config: HTTPServerConfig) {
 
     // 404
     res.writeHead(404);
-    res.end(JSON.stringify({ error: 'Not found', endpoints: ['/health', '/agents', '/stats', '/sse', '/mcp'] }));
+    res.end(JSON.stringify({ error: 'Not found', endpoints: ['/health', '/agents', '/stats', '/sse', '/mcp', '/registry/search', '/registry/health-check'] }));
   });
+
+  // Graceful shutdown
+  const shutdown = () => {
+    console.log('[Nexarion HTTP] Shutting down gracefully...');
+    for (const client of sseClients) client.end();
+    sseClients.clear();
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 5000);
+  };
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
 
   return {
     start() {
@@ -181,7 +234,10 @@ export function createHTTPServer(config: HTTPServerConfig) {
     stop() {
       for (const client of sseClients) client.end();
       sseClients.clear();
-      return new Promise<void>((resolve) => server.close(() => resolve()));
+      return new Promise<void>((resolve) => {
+        server.close(() => resolve());
+        setTimeout(() => resolve(), 5000); // Force close after 5s
+      });
     },
     /** Broadcast an event to all SSE clients */
     broadcast(event: string, data: unknown) {

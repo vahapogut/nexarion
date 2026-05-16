@@ -69,8 +69,8 @@ export class EventBridge {
     };
 
     if (secret) {
-      const crypto = require('crypto');
-      const hmac = crypto.createHmac('sha256', secret).update(body).digest('hex');
+      const { createHmac } = await import('node:crypto');
+      const hmac = createHmac('sha256', secret).update(body).digest('hex');
       headers['X-Nexarion-Signature'] = `sha256=${hmac}`;
     }
 
