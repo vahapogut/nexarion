@@ -94,6 +94,10 @@ export interface BridgeConfig {
   streaming?: boolean;
   /** Cache agent cards for N minutes */
   cacheMinutes?: number;
+  /** Retry configuration */
+  retry?: { maxRetries?: number; initialDelayMs?: number; maxDelayMs?: number };
+  /** Logging configuration */
+  logging?: { level: 'debug' | 'info' | 'warn' | 'error' };
 }
 
 export interface BridgeAuthConfig {

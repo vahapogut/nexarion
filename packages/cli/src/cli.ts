@@ -51,6 +51,13 @@ async function main() {
 
   try {
     switch (command) {
+      case 'validate': {
+        const validateUrl = args[1];
+        if (!validateUrl) { console.error('Usage: nexarion validate <url>'); process.exit(1); }
+        const { validateAgent } = await import('./validate.js');
+        await validateAgent(validateUrl);
+        break;
+      }
       case 'init': {
         const { wizard } = await import('./init-wizard.js');
         await wizard();

@@ -71,6 +71,18 @@ export class NexarionServer {
   }
 
   /**
+   * Get server health status.
+   */
+  getHealth() {
+    const stats = this.bridge.getStats();
+    return {
+      status: 'healthy', agents: stats.agentsDiscovered, tools: stats.toolsExposed,
+      translations: stats.translationsTotal, errors: stats.translationsFailed,
+      uptimeMs: stats.uptimeMs, timestamp: new Date().toISOString(),
+    };
+  }
+
+  /**
    * Get server statistics.
    */
   getStats() {

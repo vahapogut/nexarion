@@ -34,21 +34,38 @@ export class NexarionBridge {
     }
   }
 
-  /** Retry a fetch with exponential backoff */
-  private async fetchWithRetry(url: string, options: RequestInit, retries = this.maxRetries): Promise<Response> {
-    for (let attempt = 0; attempt <= retries; attempt++) {
+  /** Retry a fetch with exponential backoff. Handles 429 (Rate Limit) and 5xx errors. */
+  private async fetchWithRetry(url: string, options: RequestInit, retries?: number): Promise<Response> {
+    const maxRetries = retries ?? this.config.retry?.maxRetries ?? this.maxRetries;
+    const baseDelay = this.config.retry?.initialDelayMs ?? this.retryDelay;
+    const maxDelay = this.config.retry?.maxDelayMs ?? 30000;
+
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
       try {
         const response = await fetch(url, options);
-        if (response.ok || response.status < 500) return response;
-        if (attempt < retries) {
-          await new Promise(r => setTimeout(r, this.retryDelay * Math.pow(2, attempt)));
+
+        // Success or client error (non-rate-limit) — don't retry
+        if (response.ok) return response;
+        if (response.status < 500 && response.status !== 429) return response;
+
+        // Rate limit — respect Retry-After header
+        if (response.status === 429 && attempt < maxRetries) {
+          const retryAfter = response.headers.get('Retry-After');
+          const delay = retryAfter ? parseInt(retryAfter, 10) * 1000 : Math.min(baseDelay * Math.pow(2, attempt), maxDelay);
+          await new Promise(r => setTimeout(r, delay));
+          continue;
+        }
+
+        // Server error — retry with backoff
+        if (attempt < maxRetries) {
+          await new Promise(r => setTimeout(r, Math.min(baseDelay * Math.pow(2, attempt), maxDelay)));
         }
       } catch (err) {
-        if (attempt === retries) throw err;
-        await new Promise(r => setTimeout(r, this.retryDelay * Math.pow(2, attempt)));
+        if (attempt === maxRetries) throw err;
+        await new Promise(r => setTimeout(r, Math.min(baseDelay * Math.pow(2, attempt), maxDelay)));
       }
     }
-    throw new Error(`Fetch failed after ${retries} retries`);
+    throw new Error(`Fetch failed after ${maxRetries} retries`);
   }
 
   /**

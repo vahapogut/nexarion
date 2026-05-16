@@ -23,4 +23,10 @@ COPY --from=build /app/packages/cli/package.json /app/packages/cli/package.json
 COPY --from=build /app/package.json /app/package.json
 
 EXPOSE 3000
+
+USER node
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+  CMD curl -f http://localhost:3000/health || exit 1
+
 CMD ["node", "/app/packages/cli/dist/cli.js", "serve"]
