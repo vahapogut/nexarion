@@ -103,6 +103,18 @@ importers:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@25.8.0)
 
+  packages/vscode:
+    devDependencies:
+      '@types/vscode':
+        specifier: ^1.85.0
+        version: 1.120.0
+      tsup:
+        specifier: ^8.0.0
+        version: 8.5.1(postcss@8.5.14)(tsx@4.22.0)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+
   packages/web:
     devDependencies:
       typescript:
@@ -739,6 +751,9 @@ packages:
 
   '@types/node@25.8.0':
     resolution: {integrity: sha512-TCFSk8IZh+iLX1xtksoBVtdmgL+1IX0fC9BeU4QqFSuNdN/K+HUlhqOzEmSYYpZUVsLYcPqc9KX+60iDuninSQ==}
+
+  '@types/vscode@1.120.0':
+    resolution: {integrity: sha512-feaT4Rst+FkTch5zz/ZbNCxoIvo55YU80Be2kiL7OJcod4+CUYf2lUBPdIJzozNnSEMq1VRTGrWEcCGFB3fBmA==}
 
   '@vitest/expect@2.1.9':
     resolution: {integrity: sha512-UJCIkTBenHeKT1TTlKMJWy1laZewsRIzYighyYiJKZreqtdxSos/S1t+ktRMQWu2CKqaarrkeszJx1cgC5tGZw==}
@@ -1813,6 +1828,8 @@ snapshots:
   '@types/node@25.8.0':
     dependencies:
       undici-types: 7.24.6
+
+  '@types/vscode@1.120.0': {}
 
   '@vitest/expect@2.1.9':
     dependencies:
