@@ -23,7 +23,10 @@
  */
 
 import type { AgentCard, AgentSkill } from 'nexarion-core';
+import { Logger } from 'nexarion-core';
 import { createServer, type RequestListener } from 'node:http';
+
+const log = new Logger('nexarion-sdk');
 
 // ─── Types ───────────────────────────────────────────────────────────
 
@@ -105,7 +108,7 @@ export function createAgent(config: AgentConfig) {
       const handler = createAgentHandler(agentCard, skillMap, config.authToken);
 
       const server = createServer(async (req, res) => {
-        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Origin', process.env.CORS_ORIGIN || '*');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
         if (req.method === 'OPTIONS') { res.writeHead(204); res.end(); return; }
@@ -136,8 +139,8 @@ export function createAgent(config: AgentConfig) {
 
       return new Promise<void>((resolve) => {
         server.listen(port, host, () => {
-          console.log(`[Nexarion SDK] ${config.name} running on http://${host}:${port}`);
-          console.log(`[Nexarion SDK] Agent Card: http://localhost:${port}/.well-known/agent-card.json`);
+          log.info(`${config.name} running on http://${host}:${port}`);
+          log.info(`Agent Card: http://localhost:${port}/.well-known/agent-card.json`);
           resolve();
         });
       });

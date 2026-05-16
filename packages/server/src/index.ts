@@ -7,8 +7,10 @@
  * Supports: stdio (local) and Streamable HTTP (remote) transports.
  */
 
-import { NexarionBridge } from 'nexarion-core';
+import { NexarionBridge, Logger } from 'nexarion-core';
 import type { BridgeConfig, AgentCard, MCPTool } from 'nexarion-core';
+
+const log = new Logger('nexarion');
 
 // ─── Server Config ─────────────────────────────────────────────────────
 
@@ -43,19 +45,15 @@ export class NexarionServer {
   async start(): Promise<void> {
     // Auto-discover agents
     if (this.config.discover && this.config.discover.length > 0) {
-      if (this.config.debug) console.log(`[Nexarion] Discovering ${this.config.discover.length} agents...`);
+      log.info(`Discovering ${this.config.discover.length} agents...`);
       const agents = await this._bridge.discover(this.config.discover);
       for (const agent of agents) {
-        if (this.config.debug) {
-          console.log(`[Nexarion] Discovered: ${agent.card.name} (${agent.status}) — ${agent.card.skills.length} skills`);
-        }
+        log.debug(`Discovered: ${agent.card.name} (${agent.status}) — ${agent.card.skills.length} skills`);
       }
     }
 
     const stats = this._bridge.getStats();
-    if (this.config.debug) {
-      console.log(`[Nexarion] Ready — ${stats.agentsDiscovered} agents, ${stats.toolsExposed} MCP tools exposed`);
-    }
+    log.info(`Ready — ${stats.agentsDiscovered} agents, ${stats.toolsExposed} MCP tools exposed`);
   }
 
   /**

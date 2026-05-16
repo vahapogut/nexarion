@@ -77,8 +77,8 @@ async function main() {
   });
 
   const stats = server.getStats();
-  log.error(`[Nexarion] ✓ ${stats.agentsDiscovered} agents bridged`);
-  log.error(`[Nexarion] ✓ ${stats.toolsExposed} MCP tools exposed`);
+  log.info(`✓ ${stats.agentsDiscovered} agents bridged`);
+  log.info(`✓ ${stats.toolsExposed} MCP tools exposed`);
 
   // stdio mode — handle JSON-RPC from stdin
   if (transport === 'stdio') {
@@ -218,4 +218,4 @@ async function handleStdioRequest(server: Awaited<ReturnType<typeof createNexari
   }
 }
 
-main().catch(console.error);
+main().catch((err) => log.error('Fatal error', { error: err instanceof Error ? err.message : String(err) }));

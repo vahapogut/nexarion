@@ -5,7 +5,7 @@
 
   <a href="https://github.com/vahapogut/nexarion"><img src="https://img.shields.io/badge/GitHub-nexarion-blue?style=for-the-badge&logo=github" alt="GitHub"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-green?style=for-the-badge" alt="License"></a>
-  <a href="https://github.com/vahapogut/nexarion/actions"><img src="https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge" alt="Build"></a>
+  <a href="https://github.com/vahapogut/nexarion/actions"><img src="https://github.com/vahapogut/nexarion/actions/workflows/ci.yml/badge.svg" alt="Build"></a>
   <a href="https://www.npmjs.com/package/nexarion-core"><img src="https://img.shields.io/badge/npm-nexarion--core-purple?style=for-the-badge&logo=npm" alt="npm"></a>
   <a href="https://www.npmjs.com/package/nexarion-sdk"><img src="https://img.shields.io/badge/npm-nexarion--sdk-orange?style=for-the-badge&logo=npm" alt="npm"></a>
 </div>

@@ -151,7 +151,7 @@ export function createHTTPServer(config: HTTPServerConfig) {
               result: {
                 protocolVersion: '2024-11-05',
                 capabilities: { tools: {}, resources: {}, prompts: {} },
-                serverInfo: { name: 'nexarion-server', version: '0.4.0' },
+                serverInfo: { name: 'nexarion-server', version: '0.5.0' },
               },
               id,
             }));
