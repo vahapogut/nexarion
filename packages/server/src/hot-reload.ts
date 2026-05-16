@@ -1,0 +1,75 @@
+/**
+ * Nexarion — Config Hot-Reload
+ *
+ * Watches nexarion.config.json for changes and reloads
+ * the bridge without restarting the server.
+ *
+ * Usage:
+ * ```ts
+ * const watcher = createConfigWatcher('./nexarion.config.json', bridge);
+ * watcher.start();
+ * // Edit config → agents are re-discovered automatically
+ * ```
+ */
+
+import { watch, type FSWatcher } from 'fs';
+import { readFileSync } from 'fs';
+import type { NexarionBridge } from 'nexarion-core';
+
+export interface ConfigWatcher {
+  start(): void;
+  stop(): void;
+}
+
+export function createConfigWatcher(
+  configPath: string,
+  bridge: NexarionBridge,
+  onReload?: (agents: string[]) => void
+): ConfigWatcher {
+  let watcher: FSWatcher | null = null;
+
+  async function reload() {
+    try {
+      const raw = readFileSync(configPath, 'utf-8');
+      const config = JSON.parse(raw);
+
+      if (config.agents && Array.isArray(config.agents)) {
+        const urls = config.agents.map((a: { url: string }) => a.url).filter(Boolean);
+        if (urls.length > 0) {
+          console.log(`[Nexarion] Hot-reload: discovering ${urls.length} agents...`);
+          const agents = await bridge.discover(urls);
+          const online = agents.filter(a => a.status === 'online');
+
+          // Register discovered agents
+          for (const agent of agents) {
+            if (agent.status === 'online') {
+              bridge.registerAgent(agent.card);
+            }
+          }
+
+          console.log(`[Nexarion] Hot-reload complete: ${online.length}/${agents.length} online`);
+          onReload?.(urls);
+        }
+      }
+    } catch (err) {
+      console.error('[Nexarion] Hot-reload failed:', err instanceof Error ? err.message : err);
+    }
+  }
+
+  return {
+    start() {
+      watcher = watch(configPath, async (eventType) => {
+        if (eventType === 'change') {
+          console.log('[Nexarion] Config changed, reloading...');
+          // Debounce: wait 200ms for file write to complete
+          await new Promise(r => setTimeout(r, 200));
+          await reload();
+        }
+      });
+      console.log(`[Nexarion] Watching ${configPath} for changes`);
+    },
+    stop() {
+      if (watcher) { watcher.close(); watcher = null; }
+    },
+  };
+}

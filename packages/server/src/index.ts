@@ -107,3 +107,6 @@ export async function createNexarionServer(config: NexarionServerConfig): Promis
 }
 
 export { createHTTPServer, type HTTPServerConfig } from './http-server.js';
+export { createConfigWatcher, type ConfigWatcher } from './hot-reload.js';
+export { createTelemetry, withTracing, type Tracer, type Span, type TelemetryConfig } from './telemetry.js';
+export { agentsToResources, readResource, agentsToPrompts, getPromptMessages, type MCPResource, type MCPResourceContent, type MCPPrompt, type MCPPromptMessage } from './mcp-resources.js';
