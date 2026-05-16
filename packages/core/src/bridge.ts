@@ -10,6 +10,9 @@ import { ProtocolTranslator } from './translator.js';
 import { PluginManager } from './plugins.js';
 import { CapabilityAuth } from './auth.js';
 import { EventBridge } from './webhook.js';
+import { createACPClient, type ACPClient } from './acp.js';
+import { Logger } from './logger.js';
+import { AgentUnreachableError, AuthError } from './errors.js';
 import type {
   AgentCard, MCPTool, MCPToolCallRequest, MCPToolCallResult,
   BridgeConfig, BridgeStats, DiscoveredAgent,
@@ -21,6 +24,8 @@ export class NexarionBridge {
   private plugins: PluginManager;
   private auth: CapabilityAuth;
   private events: EventBridge;
+  private acp: ACPClient;
+  private logger: Logger;
   private config: BridgeConfig;
   private startTime: number;
   private translationsTotal = 0;
@@ -30,12 +35,16 @@ export class NexarionBridge {
 
   constructor(config: BridgeConfig) {
     this.config = config;
+    this.logger = new Logger('nexarion', config.logging?.level || 'info');
     this.discovery = new AgentDiscovery(config.cacheMinutes || 5);
     this.translator = new ProtocolTranslator();
     this.plugins = new PluginManager();
     this.auth = new CapabilityAuth();
     this.events = new EventBridge();
+    this.acp = createACPClient(config.auth?.a2aToken);
     this.startTime = Date.now();
+
+    this.logger.info('NexarionBridge initialized', { agents: config.agents.length });
 
     // Register pre-configured agents
     for (const card of config.agents) {
@@ -137,16 +146,19 @@ export class NexarionBridge {
         };
       }
 
-      // Find the agent's RPC endpoint
+      // Find the agent and its best endpoint
       const agent = this.discovery.listAgents().find(a => a.card.name === resolved.agentName);
-      const endpoint = agentUrl || agent?.card.endpoints?.jsonRpc || agent?.card.url;
+      if (!agent) {
+        this.translationsFailed++;
+        throw new AgentUnreachableError(`Agent "${resolved.agentName}" not found`);
+      }
+
+      const useREST = agent.card.endpoints?.rest;
+      const endpoint = agentUrl || agent.card.endpoints?.jsonRpc || agent.card.endpoints?.rest || agent.card.url;
 
       if (!endpoint) {
         this.translationsFailed++;
-        return {
-          content: [{ type: 'text', text: `Agent "${resolved.agentName}" has no reachable endpoint.` }],
-          isError: true,
-        };
+        throw new AgentUnreachableError(`Agent "${resolved.agentName}" has no reachable endpoint`, endpoint);
       }
 
       // Translate MCP → A2A
@@ -163,33 +175,51 @@ export class NexarionBridge {
         };
       }
 
-      // Send to A2A agent
-      const rpcPayload = {
-        jsonrpc: '2.0',
-        method: 'message/send',
-        params: translated.translated,
-        id: Date.now().toString(),
-      };
+      // Send to A2A agent — use ACP (REST) if available, otherwise JSON-RPC
+      let a2aResponse: Record<string, unknown>;
 
-      const response = await this.fetchWithRetry(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(this.config.auth?.a2aToken ? { 'Authorization': `Bearer ${this.config.auth.a2aToken}` } : {}),
-        },
-        body: JSON.stringify(rpcPayload),
-        signal: AbortSignal.timeout(30000),
-      });
-
-      if (!response.ok) {
-        this.translationsFailed++;
-        return {
-          content: [{ type: 'text', text: `A2A agent returned error: ${response.status} ${response.statusText}` }],
-          isError: true,
+      if (useREST) {
+        // ACP REST-native call — simpler, curl-compatible
+        this.logger.debug('Using ACP REST transport', { agent: resolved.agentName });
+        const acpMessage = {
+          role: 'user' as const,
+          text: (args?.message as string) || JSON.stringify(args),
+          context: args?.context as Record<string, unknown> | undefined,
         };
+        const acpResp = await this.acp.sendMessage(agent.card.url, acpMessage);
+        a2aResponse = {
+          message: { role: 'agent', parts: [{ type: 'text', text: acpResp.text }, ...(acpResp.data ? [{ type: 'data', data: acpResp.data }] : [])] },
+          status: { state: acpResp.status },
+        };
+      } else {
+        // JSON-RPC call
+        const rpcPayload = {
+          jsonrpc: '2.0',
+          method: 'message/send',
+          params: translated.translated,
+          id: Date.now().toString(),
+        };
+
+        const response = await this.fetchWithRetry(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(this.config.auth?.a2aToken ? { 'Authorization': `Bearer ${this.config.auth.a2aToken}` } : {}),
+          },
+          body: JSON.stringify(rpcPayload),
+          signal: AbortSignal.timeout(30000),
+        });
+
+        if (!response.ok) {
+          this.translationsFailed++;
+          throw new AgentUnreachableError(`A2A agent returned ${response.status}`, endpoint);
+        }
+
+        a2aResponse = await response.json() as Record<string, unknown>;
       }
 
-      const a2aResponse = await response.json() as Record<string, unknown>;
+
+
 
       // Translate A2A → MCP
       const result = this.translator.translateA2AtoMCP(

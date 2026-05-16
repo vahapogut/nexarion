@@ -59,6 +59,31 @@ export function createHTTPServer(config: HTTPServerConfig) {
       return;
     }
 
+    // Registry search
+    if (url === '/registry/search' || url.startsWith('/registry/search?q=')) {
+      const query = new URL(url, `http://${config.host || 'localhost'}`).searchParams.get('q') || '';
+      const agents = nexarion.listAgents()
+        .filter(a => !query || a.card.name.toLowerCase().includes(query.toLowerCase())
+          || a.card.description.toLowerCase().includes(query.toLowerCase()));
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ results: agents.map(a => ({ name: a.card.name, description: a.card.description, status: a.status, skills: a.card.skills.length })), total: agents.length }));
+      return;
+    }
+
+    // Health check all registered agents
+    if (url === '/registry/health-check') {
+      const agents = nexarion.listAgents();
+      const results = await Promise.all(agents.map(async (a) => {
+        try {
+          const r = await fetch(`${a.card.url}/health`, { signal: AbortSignal.timeout(3000) });
+          return { name: a.card.name, status: r.ok ? 'healthy' : 'degraded', code: r.status };
+        } catch { return { name: a.card.name, status: 'down' }; }
+      }));
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(results));
+      return;
+    }
+
     // Stats
     if (url === '/stats') {
       res.setHeader('Content-Type', 'application/json');
