@@ -29,6 +29,6 @@
       ]
     }
   },
-  "scripts": { "build": "echo VS Code extension — no build needed" },
+  "scripts": { "build": "tsup extension.ts --format cjs --external vscode", "package": "vsce package" },
   "devDependencies": { "@types/vscode": "^1.85.0", "tsup": "^8.0.0", "typescript": "^5.5.0" }
 }
