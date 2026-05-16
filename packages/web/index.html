@@ -1,84 +1,149 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nexarion — Bridge Monitor</title>
-  <style>
-    :root { --bg: #09090b; --panel: #18181b; --border: #27272a; --text: #fafafa; --muted: #a1a1aa; --accent: #8b5cf6; --green: #22c55e; --red: #ef4444; }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
-    .container { max-width: 1000px; margin: 0 auto; padding: 24px; }
-    header { text-align: center; padding: 32px 0 20px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-    header h1 { font-size: 1.5rem; } header h1 span { color: var(--accent); }
-    header p { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-    .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 14px; text-align: center; }
-    .stat .val { font-size: 1.4rem; font-weight: 700; } .stat .lbl { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; margin-top: 2px; }
-    .section { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
-    .section h3 { font-size: 0.8rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 10px; }
-    .agent-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: var(--bg); border-radius: 6px; margin-bottom: 6px; }
-    .agent-row .name { font-weight: 600; } .agent-row .meta { font-size: 0.75rem; color: var(--muted); }
-    .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-    .dot.online { background: var(--green); } .dot.offline { background: var(--red); }
-    .log-entry { font-family: monospace; font-size: 0.75rem; padding: 3px 0; border-bottom: 1px solid var(--border); color: var(--muted); }
-    .toolbar { display: flex; gap: 8px; margin-bottom: 16px; }
-    button { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; font-size: 0.8rem; background: var(--panel); color: var(--text); }
-    button:hover { border-color: var(--accent); }
-    input { padding: 6px 12px; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; color: var(--text); }
-    footer { text-align: center; padding: 20px; color: var(--muted); font-size: 0.7rem; } footer a { color: var(--accent); }
-    @media (max-width: 600px) { .stats { grid-template-columns: 1fr 1fr; } }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexarion — Bridge Monitor</title>
+<style>
+:root { --bg:#09090b;--panel:#18181b;--border:#27272a;--text:#fafafa;--muted:#a1a1aa;--accent:#8b5cf6;--green:#22c55e;--red:#ef4444;--amber:#f59e0b; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+header{text-align:center;padding:32px 0 20px;border-bottom:1px solid var(--border);margin-bottom:20px}
+header h1{font-size:1.5rem} header h1 span{color:var(--accent)} header p{color:var(--muted);font-size:.85rem;margin-top:4px}
+
+.toolbar{display:flex;gap:8px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.toolbar input{padding:6px 12px;background:var(--panel);border:1px solid var(--border);border-radius:6px;color:var(--text);flex:1;max-width:300px}
+.toolbar button{padding:6px 14px;border-radius:6px;border:1px solid var(--border);cursor:pointer;font-size:.8rem;background:var(--panel);color:var(--text)}
+.toolbar button:hover{border-color:var(--accent)}
+.toolbar button.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.toolbar .auto-refresh{display:flex;align-items:center;gap:4px;font-size:.75rem;color:var(--muted)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:20px}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center}
+.stat .val{font-size:1.4rem;font-weight:700}.stat .lbl{font-size:.65rem;color:var(--muted);text-transform:uppercase;margin-top:2px}
+.stat .val.green{color:var(--green)}.stat .val.red{color:var(--red)}.stat .val.accent{color:var(--accent)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+.section{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px}
+.section h3{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:10px}
+
+.agent-row,.log-row{display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg);border-radius:6px;margin-bottom:6px;font-size:.85rem}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:6px}
+.dot.online{background:var(--green)}.dot.offline{background:var(--red)}.dot.unknown{background:var(--amber)}
+
+.log-panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.log-entries{max-height:250px;overflow-y:auto}
+.log-entry{font-family:monospace;font-size:.73rem;padding:3px 0;border-bottom:1px solid var(--border);color:var(--muted)}
+.log-entry .ts{color:var(--accent)}
+
+.tool-test{display:flex;flex-direction:column;gap:8px}
+.tool-test select,.tool-test input{padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:.85rem}
+.tool-test textarea{padding:6px 10px;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:var(--text);font-size:.8rem;min-height:60px;resize:vertical}
+.tool-result{padding:10px;background:var(--bg);border-radius:6px;font-family:monospace;font-size:.8rem;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+
+footer{text-align:center;padding:20px;color:var(--muted);font-size:.7rem}footer a{color:var(--accent)}
+@media(max-width:768px){.grid2{grid-template-columns:1fr}}
+</style>
 </head>
 <body>
 <div class="container">
-  <header><h1>Nexar<span style="color:var(--accent)">ion</span> Bridge Monitor</h1><p>Real-time MCP ↔ A2A bridge dashboard. Connect to a running Nexarion server.</p></header>
-  <div class="toolbar">
-    <input id="url" value="http://localhost:3000" placeholder="Server URL" style="flex:1;max-width:300px">
-    <button onclick="fetchAll()">Refresh</button>
-    <button onclick="startSSE()">Live SSE</button>
-  </div>
-  <div class="stats">
-    <div class="stat"><div class="val green" id="s-agents">—</div><div class="lbl">Agents</div></div>
-    <div class="stat"><div class="val" id="s-tools">—</div><div class="lbl">Tools</div></div>
-    <div class="stat"><div class="val" id="s-trans">—</div><div class="lbl">Translations</div></div>
-    <div class="stat"><div class="val red" id="s-err">—</div><div class="lbl">Errors</div></div>
-  </div>
-  <div class="section"><h3>Connected Agents</h3><div id="agents"></div></div>
-  <div class="section"><h3>Live Log</h3><div id="log"></div></div>
-  <footer><a href="https://github.com/vahapogut/nexarion">GitHub</a> · Nexarion v0.5.0</footer>
+<header>
+  <h1>Nexar<span>ion</span> Bridge Monitor</h1>
+  <p>Real-time MCP ↔ A2A bridge dashboard. Connect to a running server.</p>
+</header>
+
+<div class="toolbar">
+  <input id="url" value="http://localhost:3000" placeholder="Server URL">
+  <button class="primary" onclick="fetchAll()">Refresh</button>
+  <button onclick="toggleSSE()" id="sse-btn">SSE Live</button>
+  <span class="auto-refresh"><input type="checkbox" id="auto" onchange="toggleAuto()"> Auto (5s)</span>
 </div>
+
+<div class="stats">
+  <div class="stat"><div class="val green" id="s-agents">—</div><div class="lbl">Agents</div></div>
+  <div class="stat"><div class="val accent" id="s-tools">—</div><div class="lbl">Tools</div></div>
+  <div class="stat"><div class="val" id="s-trans">—</div><div class="lbl">Translations</div></div>
+  <div class="stat"><div class="val red" id="s-err">—</div><div class="lbl">Errors</div></div>
+  <div class="stat"><div class="val" id="s-uptime">—</div><div class="lbl">Uptime</div></div>
+</div>
+
+<div class="grid2">
+  <div class="section"><h3>Connected Agents</h3><div id="agents"><span style="color:var(--muted)">Loading...</span></div></div>
+  <div class="section"><h3>Tool Test Console</h3>
+    <div class="tool-test">
+      <select id="tool-select"><option>Select a tool...</option></select>
+      <input id="tool-args" placeholder='{"message":"Hello"}' value='{"message":"Hello"}'>
+      <button onclick="callTool()">Execute Tool</button>
+      <div class="tool-result" id="tool-result" style="color:var(--muted)">Result will appear here</div>
+    </div>
+  </div>
+</div>
+
+<div class="log-panel"><h3>Event Log</h3><div class="log-entries" id="log"><span style="color:var(--muted)">No events</span></div></div>
+<footer><a href="https://github.com/vahapogut/nexarion">GitHub</a> · Nexarion v0.6.0 · Built by <a href="https://ipeclabs.com">IPEC Labs</a></footer>
+</div>
+
 <script>
-let es;
-const logEl = document.getElementById('log');
+let es=null,autoInterval=null;
+const $=id=>document.getElementById(id);
+const logEl=$('log');
+
 function log(t,m){
-  const d=document.createElement('div');
-  d.className='log-entry';
-  d.textContent=`${new Date().toLocaleTimeString()} [${t}] ${m}`;
+  const d=document.createElement('div');d.className='log-entry';
+  d.innerHTML=`<span class="ts">${new Date().toLocaleTimeString()}</span> ${t==='err'?'❌':t==='ok'?'✅':'📡'} ${m}`;
   logEl.insertBefore(d,logEl.firstChild);
+  if(logEl.children.length>50)logEl.lastChild.remove();
 }
+
 async function fetchAll(){
-  const b=document.getElementById('url').value.replace(/\/$/,'');
+  const b=$('url').value.replace(/\/$/,'');
   try{
     const h=await(await fetch(b+'/health')).json();
-    document.getElementById('s-agents').textContent=h.agents||0;
-    document.getElementById('s-tools').textContent=h.tools||0;
-    document.getElementById('s-trans').textContent=h.translations||0;
-    document.getElementById('s-err').textContent=h.errors||0;
+    $('s-agents').textContent=h.agents||0;$('s-tools').textContent=h.tools||0;
+    $('s-trans').textContent=h.translations||0;$('s-err').textContent=h.errors||0;
+    $('s-uptime').textContent=Math.round((h.uptimeMs||0)/1000)+'s';
+
     const a=await(await fetch(b+'/agents')).json();
-    const el=document.getElementById('agents');
-    el.innerHTML=a.length?a.map(x=>`<div class="agent-row"><div><span class="dot ${x.status}"></span><span class="name">${x.name}</span></div><div class="meta">${x.skills} skills · ${x.latency}ms</div></div>`).join(''):'<div style="color:var(--muted)">No agents connected.</div>';
-    log('ok','Fetched: '+h.agents+' agents');
+    const al=$('agents');
+    if(!a.length){al.innerHTML='<span style="color:var(--muted)">No agents connected.</span>';}
+    else{al.innerHTML=a.map(x=>`<div class="agent-row"><div><span class="dot ${x.status}"></span><b>${x.name}</b></div><div style="color:var(--muted)">${x.skills} skills · ${x.latency}ms</div><div style="color:${x.status==='online'?'var(--green)':'var(--red)'}">${x.status}</div></div>`).join('');}
+
+    // Update tool select
+    const st=await(await fetch(b+'/stats')).json();
+    const sel=$('tool-select');sel.innerHTML='<option>Select a tool...</option>';
+    log('ok','Fetched: '+h.agents+' agents, '+h.tools+' tools');
   }catch(e){log('err',e.message)}
 }
-function startSSE(){
-  if(es)es.close();
-  const url=document.getElementById('url').value.replace(/\/$/,'');
-  es=new EventSource(url+'/sse');
-  es.onopen=()=>log('sse','Connected');
-  es.onmessage=e=>{try{log('evt',JSON.stringify(JSON.parse(e.data)))}catch{} };
-  es.onerror=()=>log('err','SSE lost');
+
+async function callTool(){
+  const b=$('url').value.replace(/\/$/,'');
+  const name=$('tool-select').value;
+  if(!name||name==='Select a tool...'){$('tool-result').textContent='Select a tool first';return}
+  try{
+    const args=JSON.parse($('tool-args').value);
+    $('tool-result').textContent='Calling...';
+    const r=await fetch(b+'/mcp',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',method:'tools/call',params:{name,arguments:args},id:Date.now()})});
+    const d=await r.json();
+    $('tool-result').textContent=JSON.stringify(d,null,2);
+    log('ok','Tool call: '+name);
+  }catch(e){$('tool-result').textContent='Error: '+e.message;log('err',e.message)}
 }
+
+function toggleSSE(){
+  if(es){es.close();es=null;$('sse-btn').textContent='SSE Live';log('sse','Disconnected');return}
+  const b=$('url').value.replace(/\/$/,'');
+  es=new EventSource(b+'/sse');$('sse-btn').textContent='SSE Stop';
+  es.onopen=()=>log('sse','Connected');
+  es.onmessage=e=>{try{const d=JSON.parse(e.data);log('sse',JSON.stringify(d))}catch{} };
+  es.onerror=()=>{log('err','SSE lost');toggleSSE()}
+}
+
+function toggleAuto(){
+  if($('auto').checked){autoInterval=setInterval(fetchAll,5000);log('ok','Auto-refresh ON')}
+  else{clearInterval(autoInterval);log('ok','Auto-refresh OFF')}
+}
+
 fetchAll();
 </script>
 </body>
