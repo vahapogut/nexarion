@@ -3,11 +3,12 @@
   "version": "0.6.0",
   "displayName": "Nexarion — MCP ↔ A2A Bridge",
   "description": "Manage Nexarion bridges directly from VS Code. View connected A2A agents, test MCP tools, and monitor translations.",
-  "publisher": "ipeclabs",
+  "publisher": "vahapogut1",
+  "repository": { "type": "git", "url": "https://github.com/vahapogut/nexarion" },
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Other"],
   "activationEvents": [],
-  "main": "./extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "configuration": {
       "title": "Nexarion",
@@ -39,6 +40,6 @@
       ]
     }
   },
-  "scripts": { "build": "tsup extension.ts --format cjs --external vscode", "package": "vsce package" },
+  "scripts": { "build": "tsup extension.ts --format cjs --external vscode" },
   "devDependencies": { "@types/vscode": "^1.85.0", "tsup": "^8.0.0", "typescript": "^5.5.0" }
 }
